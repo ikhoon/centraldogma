@@ -19,9 +19,9 @@ jobs:
           - java: 11
             coverage: true
           - java: 8
-            os: ubuntu-18.04
+            os: ubuntu-latest
           - java: 14
-            os: ubuntu-18.04
+            os: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
 
