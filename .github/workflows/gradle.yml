@@ -37,6 +37,8 @@ jobs:
       with:
         remote-build-cache-proxy-enabled: false
         arguments: --no-daemon --stacktrace checkstyle check build ${{ matrix.coverage && '-Pcoverage' || '' }}
+        gradle-dependencies-cache-key: |
+          ~/.gradle/go/binary
 
     - name: Upload coverage to Codecov
       if: ${{ matrix.coverage }}
@@ -45,6 +47,7 @@ jobs:
     - name: Collecting the test reports ..
       if: failure()
       run: find . '(' -name 'hs_err_*.log' -or -path '*/build/reports/tests' ')' -exec tar rf "reports-JVM-${{ matrix.java }}.tar" {} ';'
+      shell: bash
 
     - name: Upload Artifact
       if: failure()
