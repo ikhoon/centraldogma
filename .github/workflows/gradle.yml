@@ -17,6 +17,7 @@ jobs:
         java: [11]
         include:
           - java: 11
+            os: ubuntu-latest
             coverage: true
           - java: 8
             os: ubuntu-latest
