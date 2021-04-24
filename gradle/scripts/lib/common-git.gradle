@@ -28,8 +28,12 @@ private def getGitPath() {
     try {
         if (current() == WINDOWS) {
             def commands = executeCommand('where.exe', 'git.exe')
-            // Multiple commands could be returned based on CI environment
-            return commands.split(' ')[0]
+            // Several git.exe could be installed based on CI environment
+            def index = commands.indexOf("git.exe")
+            if (index < 0) {
+                throw new IllegalStateException("Invalid git command: " + commands)
+            }
+            return commands.substring(0, index + "git.exe".length())
         } else {
             return executeCommand('which', 'git')
         }
