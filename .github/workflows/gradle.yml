@@ -37,6 +37,11 @@ jobs:
       with:
         remote-build-cache-proxy-enabled: false
         arguments: --no-daemon --stacktrace checkstyle check build ${{ matrix.coverage && '-Pcoverage' || '' }}
+
+    - name: Codecov Report
+    - if: ${{ matrix.coverage }}
+      uses: codecov/codecov-action@v1
+
     - name: Collecting the test reports ..
       if: failure()
       run: find . '(' -name 'hs_err_*.log' -or -path '*/build/reports/tests' ')' -exec tar rf "reports-JVM-${{ matrix.java }}.tar" {} ';'
