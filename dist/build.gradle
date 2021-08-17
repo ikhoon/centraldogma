@@ -132,7 +132,7 @@ task docker(group: 'Build',
             dependsOn: tasks.distDir,
             type: DockerBuildImage) {
     inputDir = file('.')
-    def name = 'line/centraldogma:'
+    def name = 'ikhoon/centraldogma-test:'
     images = [name + "${project.version}"]
     if (!(project.version =~ /-SNAPSHOT$/)) {
         images.add(name + "latest")
