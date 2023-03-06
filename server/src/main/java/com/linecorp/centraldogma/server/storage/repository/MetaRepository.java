@@ -17,6 +17,7 @@
 package com.linecorp.centraldogma.server.storage.repository;
 
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import com.linecorp.centraldogma.server.mirror.Mirror;
 
@@ -25,7 +26,15 @@ import com.linecorp.centraldogma.server.mirror.Mirror;
  */
 public interface MetaRepository extends Repository {
     /**
-     * Returns a set of mirroring tasks.
+     * Returns active mirroring tasks.
      */
-    Set<Mirror> mirrors();
+    default CompletableFuture<Set<Mirror>> mirrors() {
+        return mirrors(false);
+    }
+
+    /**
+     * Returns a set of mirroring tasks. If {@code includeDisabled} is @{code true}, disabled mirroring tasks
+     * are also included in the returned {@link Mirror}s.
+     */
+    CompletableFuture<Set<Mirror>> mirrors(boolean includeDisabled);
 }

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.net.URI;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,7 @@ class DefaultMirroringServiceTest {
 
         final Mirror mirror = new AbstractMirror(EVERY_SECOND, MirrorDirection.REMOTE_TO_LOCAL,
                                                  MirrorCredential.FALLBACK, r, "/",
-                                                 URI.create("unused://uri"), "/", null, null) {
+                                                 URI.create("unused://uri"), "/", null, null, true) {
             @Override
             protected void mirrorLocalToRemote(File workDir, int maxNumFiles, long maxNumBytes) {}
 
@@ -81,7 +82,7 @@ class DefaultMirroringServiceTest {
             }
         };
 
-        when(mr.mirrors()).thenReturn(ImmutableSet.of(mirror));
+        when(mr.mirrors()).thenReturn(CompletableFuture.completedFuture(ImmutableSet.of(mirror)));
 
         final DefaultMirroringService service = new DefaultMirroringService(
                 temporaryFolder, pm, new SimpleMeterRegistry(), 1, 1, 1);

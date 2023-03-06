@@ -127,6 +127,7 @@ import com.linecorp.centraldogma.server.internal.admin.util.RestfulJsonResponseC
 import com.linecorp.centraldogma.server.internal.api.AdministrativeService;
 import com.linecorp.centraldogma.server.internal.api.ContentServiceV1;
 import com.linecorp.centraldogma.server.internal.api.MetadataApiService;
+import com.linecorp.centraldogma.server.internal.api.MirroringServiceV1;
 import com.linecorp.centraldogma.server.internal.api.ProjectServiceV1;
 import com.linecorp.centraldogma.server.internal.api.RepositoryServiceV1;
 import com.linecorp.centraldogma.server.internal.api.TokenService;
@@ -392,13 +393,13 @@ public class CentralDogma implements AutoCloseable {
                 logger.info("Starting plugins on the leader replica ..");
                 pluginsForLeaderOnly
                         .start(cfg, pm, exec, meterRegistry, purgeWorker).handle((unused, cause) -> {
-                    if (cause == null) {
-                        logger.info("Started plugins on the leader replica.");
-                    } else {
-                        logger.error("Failed to start plugins on the leader replica..", cause);
-                    }
-                    return null;
-                });
+                            if (cause == null) {
+                                logger.info("Started plugins on the leader replica.");
+                            } else {
+                                logger.error("Failed to start plugins on the leader replica..", cause);
+                            }
+                            return null;
+                        });
             }
         };
 
@@ -694,6 +695,9 @@ public class CentralDogma implements AutoCloseable {
         sb.annotatedService(API_V1_PATH_PREFIX,
                             new RepositoryServiceV1(safePm, executor, mds), decorator,
                             v1RequestConverter, v1ResponseConverter);
+        sb.annotatedService(API_V1_PATH_PREFIX,
+                            new MirroringServiceV1(safePm, executor), decorator,
+                            v1RequestConverter, v1RequestConverter);
         sb.annotatedService()
           .pathPrefix(API_V1_PATH_PREFIX)
           .defaultServiceNaming(new ServiceNaming() {

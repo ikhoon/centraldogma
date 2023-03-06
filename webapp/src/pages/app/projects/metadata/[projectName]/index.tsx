@@ -14,6 +14,7 @@ import { NewMember } from 'dogma/features/metadata/NewMember';
 import { NewAppToken } from 'dogma/features/metadata/NewAppToken';
 import { useAppSelector } from 'dogma/store';
 import { Deferred } from 'dogma/common/components/Deferred';
+import MirrorList from "dogma/features/metadata/MirrorList";
 
 let tabs = ['repositories', 'permissions', 'members', 'tokens', 'mirror'];
 
@@ -115,7 +116,12 @@ const ProjectMetadataPage = () => {
                   />
                 </TabPanel>
               )}
-              <TabPanel>Coming soon</TabPanel>
+              <TabPanel>
+                <Flex>
+                  <Spacer />
+                </Flex>
+                <MirrorList data={[]} projectName={""} />
+              </TabPanel>
             </TabPanels>
           </Tabs>
         </Box>
