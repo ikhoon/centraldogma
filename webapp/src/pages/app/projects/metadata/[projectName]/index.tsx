@@ -1,4 +1,4 @@
-import { Box, Flex, Heading, Spacer, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Spacer, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react';
 import { NewRepo } from 'dogma/features/repo/NewRepo';
 import { Breadcrumbs } from 'dogma/common/components/Breadcrumbs';
 import { useGetMetadataByProjectNameQuery } from 'dogma/features/api/apiSlice';
@@ -14,7 +14,10 @@ import { NewMember } from 'dogma/features/metadata/NewMember';
 import { NewAppToken } from 'dogma/features/metadata/NewAppToken';
 import { useAppSelector } from 'dogma/store';
 import { Deferred } from 'dogma/common/components/Deferred';
-import MirrorList from "dogma/features/metadata/MirrorList";
+import MirrorList from "dogma/features/mirror/MirrorList";
+import { AiOutlinePlus } from "react-icons/ai";
+
+// TODO(ikhoon): Move this page to /app/projects/[projectName]/metadata
 
 let tabs = ['repositories', 'permissions', 'members', 'tokens', 'mirror'];
 
@@ -119,8 +122,17 @@ const ProjectMetadataPage = () => {
               <TabPanel>
                 <Flex>
                   <Spacer />
+                  <Button
+                    as={Link}
+                    href={`/app/projects/${projectName}/mirrors/new`}
+                    size="sm"
+                    rightIcon={<AiOutlinePlus />}
+                    colorScheme="teal"
+                  >
+                    New Mirror
+                  </Button>
                 </Flex>
-                <MirrorList data={[]} projectName={""} />
+                <MirrorList projectName={projectName} />
               </TabPanel>
             </TabPanels>
           </Tabs>

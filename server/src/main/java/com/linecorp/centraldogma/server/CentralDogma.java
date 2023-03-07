@@ -696,7 +696,7 @@ public class CentralDogma implements AutoCloseable {
                             new RepositoryServiceV1(safePm, executor, mds), decorator,
                             v1RequestConverter, v1ResponseConverter);
         sb.annotatedService(API_V1_PATH_PREFIX,
-                            new MirroringServiceV1(safePm, executor), decorator,
+                            new MirroringServiceV1(safePm, executor, mds), decorator,
                             v1RequestConverter, v1RequestConverter);
         sb.annotatedService()
           .pathPrefix(API_V1_PATH_PREFIX)

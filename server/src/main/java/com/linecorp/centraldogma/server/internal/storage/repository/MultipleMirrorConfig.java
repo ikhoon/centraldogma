@@ -61,13 +61,7 @@ final class MultipleMirrorConfig extends MirrorConfig {
     }
 
     @Override
-    List<Mirror> toMirrors(Project parent, Iterable<MirrorCredential> credentials,
-                           boolean includeDisabled) {
-        if (!includeDisabled && !enabled) {
-            // Should return active mirrors.
-            return ImmutableList.of();
-        }
-
+    List<Mirror> toMirrors(Project parent, Iterable<MirrorCredential> credentials) {
         final ImmutableList.Builder<Mirror> builder = ImmutableList.builder();
         parent.repos().list().forEach((repoName, repo) -> {
             if (repoName == null || excludes.stream().anyMatch(p -> p.matcher(repoName).find())) {

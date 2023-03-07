@@ -10,7 +10,10 @@ import javax.annotation.Nullable;
 
 import com.cronutils.model.Cron;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 
@@ -19,7 +22,10 @@ import com.linecorp.centraldogma.server.mirror.MirrorCredential;
 import com.linecorp.centraldogma.server.mirror.MirrorDirection;
 import com.linecorp.centraldogma.server.storage.project.Project;
 
+@JsonInclude(Include.NON_NULL)
 public final class SingleMirrorConfig extends MirrorConfig {
+
+    public static Splitter gitignoreSplitter = Splitter.on('\n');
 
     final MirrorDirection direction;
     @Nullable
@@ -79,5 +85,46 @@ public final class SingleMirrorConfig extends MirrorConfig {
         return ImmutableList.of(Mirror.of(
                 schedule, direction, findCredential(credentials, remoteUri, credentialId),
                 parent.repos().get(localRepo), localPath, remoteUri, gitignore, enabled));
+    }
+
+    @JsonProperty("direction")
+    public MirrorDirection direction() {
+        return direction;
+    }
+
+    @Nullable
+    @JsonProperty("localRepo")
+    public String localRepo() {
+        return localRepo;
+    }
+
+    @Nullable
+    @JsonProperty("localPath")
+    public String localPath() {
+        return localPath;
+    }
+
+    @JsonProperty("remoteUri")
+    public String remoteUri() {
+        return remoteUri.toString();
+    }
+
+    @Nullable
+    public List<String> gitignore() {
+        if (gitignore == null) {
+            return null;
+        }
+        return gitignoreSplitter.splitToList(gitignore);
+    }
+
+    @Nullable
+    @JsonProperty("credentialId")
+    public String credentialId() {
+        return credentialId;
+    }
+
+    @JsonProperty("schedule")
+    public String schedule() {
+        return schedule.asString();
     }
 }

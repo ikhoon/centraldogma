@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import com.cronutils.model.CronType;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.parser.CronParser;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -29,8 +30,7 @@ public abstract class MirrorConfig {
     static final CronParser cronParser = new CronParser(
             CronDefinitionBuilder.instanceDefinitionFor(CronType.QUARTZ));
 
-    abstract List<Mirror> toMirrors(Project parent, Iterable<MirrorCredential> credentials,
-                                    boolean includeDisabled);
+    abstract List<Mirror> toMirrors(Project parent, Iterable<MirrorCredential> credentials);
 
     static MirrorCredential findCredential(Iterable<MirrorCredential> credentials, URI remoteUri,
                                            @Nullable String credentialId) {
@@ -58,5 +58,10 @@ public abstract class MirrorConfig {
 
     MirrorConfig(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @JsonProperty("enabled")
+    public boolean enabled() {
+        return enabled;
     }
 }

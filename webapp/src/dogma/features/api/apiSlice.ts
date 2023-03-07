@@ -28,6 +28,8 @@ import { DeleteMemberDto } from 'dogma/features/metadata/DeleteMemberDto';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/dist/query';
 import { DeleteUserPermissionDto } from 'dogma/features/repo/permissions/DeleteUserPermissionDto';
 import { AddUserPermissionDto } from 'dogma/features/repo/permissions/AddUserPermissionDto';
+import { MirrorDto } from 'dogma/features/mirror/MirrorDto';
+import { BaseQueryResult } from "@reduxjs/toolkit/src/query/baseQueryTypes";
 
 export type GetHistory = {
   projectName: string;
@@ -312,6 +314,21 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ['Token'],
     }),
+    getMirrors: builder.query<MirrorDto[], string>({
+      query: (projectName) => `/v1/mirrors/projects/${projectName}`,
+      providesTags: ['Metadata'],
+    }),
+    addNewMirror: builder.mutation<any, MirrorDto>({
+      query: (mirror) => ({
+          url: `/v1/mirrors/projects/${mirror.projectName}`,
+          method: 'POST',
+          headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+          },
+          body: mirror
+        }
+      ),
+    })
   }),
 });
 
@@ -350,4 +367,7 @@ export const {
   // History
   useGetHistoryQuery,
   useGetNormalisedRevisionQuery,
+  // Mirror
+  useGetMirrorsQuery,
+  useAddNewMirrorMutation,
 } = apiSlice;

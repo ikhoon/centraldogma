@@ -20,11 +20,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.linecorp.centraldogma.internal.jsonpatch.JsonPatchOperation.asJsonArray;
 import static com.linecorp.centraldogma.internal.jsonpatch.JsonPatchUtil.encodeSegment;
 import static com.linecorp.centraldogma.server.internal.storage.project.ProjectInitializer.INTERNAL_PROJECT_DOGMA;
+import static com.linecorp.centraldogma.server.internal.storage.repository.DefaultMetaRepository.PATH_MIRRORS;
 import static com.linecorp.centraldogma.server.metadata.RepositorySupport.convertWithJackson;
 import static com.linecorp.centraldogma.server.metadata.Tokens.SECRET_PREFIX;
 import static com.linecorp.centraldogma.server.metadata.Tokens.validateSecret;
 import static java.util.Objects.requireNonNull;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +49,9 @@ import com.linecorp.centraldogma.common.ChangeConflictException;
 import com.linecorp.centraldogma.common.RepositoryExistsException;
 import com.linecorp.centraldogma.common.Revision;
 import com.linecorp.centraldogma.internal.Jackson;
+import com.linecorp.centraldogma.internal.api.v1.MirrorDto;
 import com.linecorp.centraldogma.internal.jsonpatch.AddOperation;
+import com.linecorp.centraldogma.internal.jsonpatch.JsonPatch;
 import com.linecorp.centraldogma.internal.jsonpatch.JsonPatchOperation;
 import com.linecorp.centraldogma.internal.jsonpatch.RemoveIfExistsOperation;
 import com.linecorp.centraldogma.internal.jsonpatch.RemoveOperation;
@@ -56,6 +60,10 @@ import com.linecorp.centraldogma.internal.jsonpatch.TestAbsenceOperation;
 import com.linecorp.centraldogma.server.QuotaConfig;
 import com.linecorp.centraldogma.server.command.CommandExecutor;
 import com.linecorp.centraldogma.server.internal.storage.project.SafeProjectManager;
+import com.linecorp.centraldogma.server.internal.storage.repository.SingleMirrorConfig;
+import com.linecorp.centraldogma.server.mirror.Mirror;
+import com.linecorp.centraldogma.server.mirror.MirrorDirection;
+import com.linecorp.centraldogma.server.mirror.MirrorUtil;
 import com.linecorp.centraldogma.server.storage.project.Project;
 import com.linecorp.centraldogma.server.storage.project.ProjectManager;
 
@@ -974,6 +982,47 @@ public class MetadataService {
         validateSecret(secret);
         return tokenRepo.fetch(INTERNAL_PROJECT_DOGMA, Project.REPO_DOGMA, TOKEN_JSON)
                         .thenApply(tokens -> tokens.object().findBySecret(secret));
+    }
+
+    /**
+     * Creates a new {@link Mirror} to the {@code projectName}.
+     */
+    public CompletableFuture<Revision> createMirror(String projectName, MirrorDto mirrorDto, Author author) {
+        // TODO(ikhoon): Validate input values for:
+        //  - credentialId: find valid credentialId
+        //  - schedule: should not less than one minute
+        //  - remoteScheme: git+http, git+http, git+ssh
+        //  - localRepo: should create the local repo before
+
+        final String summary;
+        if (MirrorDirection.valueOf(mirrorDto.direction()) == MirrorDirection.REMOTE_TO_LOCAL) {
+            summary = "Create a new mirror from " + mirrorDto.remoteUrl() + mirrorDto.remotePath() + '#'
+                      + mirrorDto.remoteBranch() + " into " + mirrorDto.localRepo() + mirrorDto.localPath();
+        } else {
+            summary = "Create a new mirror from " + mirrorDto.localRepo() + mirrorDto.localPath() + " into "
+                      + mirrorDto.remoteUrl() + mirrorDto.remotePath() + '#' + mirrorDto.remoteBranch();
+        }
+        final SingleMirrorConfig mirrorConfig = converterToMirrorConfig(mirrorDto);
+        final Change<JsonNode> change = Change.ofJsonPatch(
+                PATH_MIRRORS, asJsonArray(new AddOperation(JsonPointer.compile("/-"),
+                                                            Jackson.valueToTree(mirrorConfig))));
+        return metadataRepo.push(projectName, Project.REPO_META, author, summary, change);
+    }
+
+    private static SingleMirrorConfig converterToMirrorConfig(MirrorDto mirrorDto) {
+        final String remoteUri =
+                mirrorDto.remoteScheme() + "://" + mirrorDto.remoteUrl() +
+                MirrorUtil.normalizePath(mirrorDto.remotePath()) + '#' + mirrorDto.remoteBranch();
+
+        return new SingleMirrorConfig(
+                mirrorDto.enabled(),
+                mirrorDto.schedule(),
+                MirrorDirection.valueOf(mirrorDto.direction()),
+                mirrorDto.localRepo(),
+                mirrorDto.localPath(),
+                URI.create(remoteUri),
+                mirrorDto.gitignore(),
+                mirrorDto.credentialId());
     }
 
     /**

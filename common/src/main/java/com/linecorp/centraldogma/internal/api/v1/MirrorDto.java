@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,6 +17,7 @@ public final class MirrorDto {
 
     @Nullable
     private final String name;
+    private final String projectName;
     private final String schedule;
     private final String direction;
     private final String localRepo;
@@ -29,10 +31,22 @@ public final class MirrorDto {
     private final String credentialId;
     private final boolean enabled;
 
-    public MirrorDto(@Nullable String name, String schedule, String direction, String localRepo,
-                     String localPath, final String remoteScheme, String remoteUrl, String remotePath, String remoteBranch,
-                     List<String> gitignore, @Nullable String credentialId, boolean enabled) {
+    @JsonCreator
+    public MirrorDto(@JsonProperty("name") @Nullable String name,
+                     @JsonProperty("projectName") String projectName,
+                     @JsonProperty("schedule") String schedule,
+                     @JsonProperty("direction") String direction,
+                     @JsonProperty("localRepo") String localRepo,
+                     @JsonProperty("localPath") String localPath,
+                     @JsonProperty("remoteScheme") String remoteScheme,
+                     @JsonProperty("remoteUrl") String remoteUrl,
+                     @JsonProperty("remotePath") String remotePath,
+                     @JsonProperty("remoteBranch") String remoteBranch,
+                     @JsonProperty("gitignore") List<String> gitignore,
+                     @JsonProperty("credentialId") @Nullable String credentialId,
+                     @JsonProperty("enabled") boolean enabled) {
         this.name = name;
+        this.projectName = requireNonNull(projectName, "projectName");
         this.schedule = requireNonNull(schedule, "schedule");
         this.direction = requireNonNull(direction, "direction");
         this.localRepo = requireNonNull(localRepo, "localRepo");
@@ -50,6 +64,11 @@ public final class MirrorDto {
     @JsonProperty("name")
     public String name() {
         return name;
+    }
+
+    @JsonProperty("projectName")
+    public String projectName() {
+        return projectName;
     }
 
     @JsonProperty("schedule")
@@ -113,6 +132,7 @@ public final class MirrorDto {
         return MoreObjects.toStringHelper(this)
                           .omitNullValues()
                           .add("name", name)
+                          .add("projectName", projectName)
                           .add("schedule", schedule)
                           .add("direction", direction)
                           .add("localRepo", localRepo)

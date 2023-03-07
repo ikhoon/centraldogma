@@ -41,6 +41,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.linecorp.centraldogma.internal.Jackson;
+
 /**
  * JSON Patch {@code add} operation.
  *
@@ -86,9 +88,15 @@ public final class AddOperation extends PathValueOperation {
     }
 
     @Override
-    JsonNode apply(final JsonNode node) {
+    JsonNode apply(JsonNode node) {
         if (path.toString().isEmpty()) {
             return valueCopy();
+        }
+        if (node.isNull() && path.head().getMatchingProperty().isEmpty() &&
+            path.last().getMatchingProperty().equals(LAST_ARRAY_ELEMENT)) {
+            // The operation adds `value` to the root array node.
+            // If the root node is null, create an empty array so that the array can be added.
+            node = Jackson.newArrayNode();
         }
 
         final JsonNode targetParent = ensureTargetParent(node, path);

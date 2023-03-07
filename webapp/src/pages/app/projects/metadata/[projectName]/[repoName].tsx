@@ -16,6 +16,8 @@ import { NewRepoTokenPermission } from 'dogma/features/repo/permissions/NewRepoT
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
+// TODO(ikhoon): Move this page to /app/projects/[projectName]/metadata/repo/[repoName]
+
 let tabs = ['role', 'user', 'token'];
 import { Deferred } from 'dogma/common/components/Deferred';
 

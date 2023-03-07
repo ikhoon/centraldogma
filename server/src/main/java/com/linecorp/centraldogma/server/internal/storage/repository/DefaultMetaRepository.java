@@ -19,6 +19,7 @@ package com.linecorp.centraldogma.server.internal.storage.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.linecorp.armeria.common.util.Exceptions;
 import com.linecorp.armeria.common.util.UnmodifiableFuture;
 import com.linecorp.centraldogma.common.Entry;
@@ -38,6 +39,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepository {
 
     public static final String PATH_CREDENTIALS = "/credentials.json";
@@ -48,6 +51,9 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
 
     private static final String PATH_CREDENTIALS_AND_MIRRORS = PATH_CREDENTIALS + ',' + PATH_MIRRORS;
 
+    private static final Map.Entry<Set<Mirror>, List<MirrorCredential>> EMPTY_MIRRORS_AND_CREDENTIALS =
+            Maps.immutableEntry(ImmutableSet.of(), ImmutableList.of());
+
     private final Lock mirrorLock = new ReentrantLock();
 
     /**
@@ -56,7 +62,7 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
     private volatile int mirrorRev = -1;
 
     @Nullable
-    private Set<Mirror> mirrors;
+    private Map.Entry<Set<Mirror>, List<MirrorCredential>> mirrorsAndCredentials;
 
     public DefaultMetaRepository(Repository repo) {
         super(repo);
@@ -64,11 +70,27 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
 
     @Override
     public CompletableFuture<Set<Mirror>> mirrors(boolean includeDisabled) {
+        return mirrorsAndCredentials().thenApply(mirrorsAndCredentials -> {
+            final Set<Mirror> mirrors = mirrorsAndCredentials.getKey();
+            if (includeDisabled) {
+                return mirrors;
+            } else {
+                return mirrors.stream().filter(Mirror::enabled).collect(toImmutableSet());
+            }
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<MirrorCredential>> credentials() {
+        return mirrorsAndCredentials().thenApply(Map.Entry::getValue);
+    }
+
+    public CompletableFuture<Map.Entry<Set<Mirror>, List<MirrorCredential>>> mirrorsAndCredentials() {
         // The head revision of meta repo will be increased if a mirror configuration is updated or
         // a repository is created or removed.
         final int headRev = normalizeNow(Revision.HEAD).major();
         if (headRev > mirrorRev) {
-            return loadMirrors(headRev, includeDisabled).handle((mirrors, cause) -> {
+            return loadMirrorsAndCredentials(headRev).handle((mirrorsAndCredentials, cause) -> {
                 if (cause != null) {
                     return Exceptions.throwUnsafely(cause);
                 }
@@ -76,23 +98,25 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
                 mirrorLock.lock();
                 final int mirrorRev = this.mirrorRev;
                 if (headRev > mirrorRev) {
-                    this.mirrors = mirrors;
+                    this.mirrorsAndCredentials = mirrorsAndCredentials;
+                    this.mirrorRev = headRev;
                 } else {
-                    // Ignore the obsolete value. `mirrors` was updated with the latest one by other threads.
+                    // `mirrors` was updated by other threads with the latest revision.
                 }
+
                 mirrorLock.unlock();
-                return mirrors;
+                return mirrorsAndCredentials;
             });
         } else {
-            return UnmodifiableFuture.completedFuture(mirrors);
+            return UnmodifiableFuture.completedFuture(mirrorsAndCredentials);
         }
     }
 
-    private CompletableFuture<Set<Mirror>> loadMirrors(int rev, boolean includeDisabled) {
+    private CompletableFuture<Map.Entry<Set<Mirror>, List<MirrorCredential>>> loadMirrorsAndCredentials(int rev) {
         return find(new Revision(rev), PATH_CREDENTIALS_AND_MIRRORS, Collections.emptyMap()).thenApply(
                 entries -> {
                     if (!entries.containsKey(PATH_MIRRORS)) {
-                        return ImmutableSet.of();
+                        return EMPTY_MIRRORS_AND_CREDENTIALS;
                     }
 
                     final JsonNode mirrorsJson = (JsonNode) entries.get(PATH_MIRRORS).content();
@@ -102,7 +126,7 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
                     }
 
                     if (mirrorsJson.isEmpty()) {
-                        return ImmutableSet.of();
+                        return EMPTY_MIRRORS_AND_CREDENTIALS;
                     }
 
                     try {
@@ -114,10 +138,10 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
                             if (c == null) {
                                 throw new RepositoryMetadataException(PATH_MIRRORS + " contains null.");
                             }
-                            mirrors.addAll(c.toMirrors(parent(), credentials, includeDisabled));
+                            mirrors.addAll(c.toMirrors(parent(), credentials));
                         }
 
-                        return mirrors.build();
+                        return Maps.immutableEntry(mirrors.build(), credentials);
                     } catch (RepositoryMetadataException e) {
                         throw e;
                     } catch (Exception e) {
@@ -138,7 +162,7 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
                     PATH_CREDENTIALS + " must be an array: " + credentialsJson.getNodeType());
         }
 
-        if (credentialsJson.size() == 0) {
+        if (credentialsJson.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -153,5 +177,4 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
 
         return builder.build();
     }
-
 }
