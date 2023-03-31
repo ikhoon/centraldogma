@@ -27,7 +27,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: Build Docker image
-        run: ./gradlew :dist:docker
+        run: ./gradlew :dist:docker --stacktrace
         shell: bash
 
       - name: Extract release version
