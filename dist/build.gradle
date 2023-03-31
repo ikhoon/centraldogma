@@ -153,7 +153,8 @@ task docker(group: 'Build',
             dependsOn: tasks.distDir,
             type: DockerBuildImage) {
     inputDir = file('.')
-    def name = 'line/centraldogma:'
+    // TODO(ikhoon): Revert ikhoon -> line
+    def name = 'ghcr.io/ikhoon/centraldogma:'
     images = [name + "${project.version}"]
     if (!(project.version =~ /-SNAPSHOT$/)) {
         images.add(name + "latest")
