@@ -49,10 +49,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ steps.release-version.outputs.result }}
-            ${{ env.IMAGE_NAME }}:latest
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${{ steps.release-version.outputs.result }}
+          docker push ${{ env.IMAGE_NAME }}:latest
+        shell: bash
