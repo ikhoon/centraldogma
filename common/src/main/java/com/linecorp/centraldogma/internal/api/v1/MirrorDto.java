@@ -15,8 +15,15 @@ import com.google.common.base.MoreObjects;
 @JsonInclude(Include.NON_NULL)
 public final class MirrorDto {
 
+    /**
+     * The index of this credential in the array at {@code path.json}.
+     * {@code null} if newly created.
+     */
     @Nullable
-    private final String name;
+    private final Integer index;
+
+    @Nullable
+    private final String id;
     private final String projectName;
     private final String schedule;
     private final String direction;
@@ -26,13 +33,15 @@ public final class MirrorDto {
     private final String remoteUrl;
     private final String remotePath;
     private final String remoteBranch;
-    private final List<String> gitignore;
+    @Nullable
+    private final String gitignore;
     @Nullable
     private final String credentialId;
     private final boolean enabled;
 
     @JsonCreator
-    public MirrorDto(@JsonProperty("name") @Nullable String name,
+    public MirrorDto(@JsonProperty("index") @Nullable Integer index,
+                     @JsonProperty("id") @Nullable String id,
                      @JsonProperty("projectName") String projectName,
                      @JsonProperty("schedule") String schedule,
                      @JsonProperty("direction") String direction,
@@ -42,10 +51,11 @@ public final class MirrorDto {
                      @JsonProperty("remoteUrl") String remoteUrl,
                      @JsonProperty("remotePath") String remotePath,
                      @JsonProperty("remoteBranch") String remoteBranch,
-                     @JsonProperty("gitignore") List<String> gitignore,
+                     @JsonProperty("gitignore") @Nullable String gitignore,
                      @JsonProperty("credentialId") @Nullable String credentialId,
                      @JsonProperty("enabled") boolean enabled) {
-        this.name = name;
+        this.index = index;
+        this.id = id;
         this.projectName = requireNonNull(projectName, "projectName");
         this.schedule = requireNonNull(schedule, "schedule");
         this.direction = requireNonNull(direction, "direction");
@@ -53,17 +63,23 @@ public final class MirrorDto {
         this.localPath = requireNonNull(localPath, "localPath");
         this.remoteScheme = requireNonNull(remoteScheme, "remoteScheme");
         this.remoteUrl = requireNonNull(remoteUrl, "remoteUrl");
-        this.remotePath = remotePath;
-        this.remoteBranch = remoteBranch;
+        this.remotePath = requireNonNull(remotePath, "remotePath");
+        this.remoteBranch = requireNonNull(remoteBranch, "remoteBranch");
         this.gitignore = gitignore;
         this.credentialId = credentialId;
         this.enabled = enabled;
     }
 
+    @JsonProperty("index")
     @Nullable
-    @JsonProperty("name")
-    public String name() {
-        return name;
+    public Integer index() {
+        return index;
+    }
+
+    @JsonProperty("id")
+    @Nullable
+    public String id() {
+        return id;
     }
 
     @JsonProperty("projectName")
@@ -112,7 +128,7 @@ public final class MirrorDto {
     }
 
     @JsonProperty("gitignore")
-    public List<String> gitignore() {
+    public String gitignore() {
         return gitignore;
     }
 
@@ -131,7 +147,7 @@ public final class MirrorDto {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                           .omitNullValues()
-                          .add("name", name)
+                          .add("id", id)
                           .add("projectName", projectName)
                           .add("schedule", schedule)
                           .add("direction", direction)

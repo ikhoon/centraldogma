@@ -33,7 +33,12 @@ import com.google.common.collect.ImmutableSet;
 
 import com.linecorp.centraldogma.server.mirror.MirrorCredential;
 
-abstract class AbstractMirrorCredential implements MirrorCredential {
+public abstract class AbstractMirrorCredential implements MirrorCredential {
+
+    /**
+     * The index should be updated by {@link #setIndex(int)} before use.
+     */
+    private int index = -1;
 
     @Nullable
     private final String id;
@@ -54,6 +59,15 @@ abstract class AbstractMirrorCredential implements MirrorCredential {
 
         return ImmutableSet.copyOf(
                 requireNonNullElements(hostnamePatterns, "hostnamePatterns"));
+    }
+
+    @Override
+    public int index() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     @Override

@@ -31,7 +31,7 @@ public interface MetaRepository extends Repository {
     /**
      * Returns active mirroring tasks.
      */
-    default CompletableFuture<Set<Mirror>> mirrors() {
+    default CompletableFuture<List<Mirror>> mirrors() {
         return mirrors(false);
     }
 
@@ -39,7 +39,7 @@ public interface MetaRepository extends Repository {
      * Returns a set of mirroring tasks. If {@code includeDisabled} is @{code true}, disabled mirroring tasks
      * are also included in the returned {@link Mirror}s.
      */
-    CompletableFuture<Set<Mirror>> mirrors(boolean includeDisabled);
+    CompletableFuture<List<Mirror>> mirrors(boolean includeDisabled);
 
     /**
      * Returns a list of mirroring credentials.

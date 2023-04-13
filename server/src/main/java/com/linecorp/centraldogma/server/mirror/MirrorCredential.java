@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -46,13 +47,21 @@ public interface MirrorCredential {
     MirrorCredential FALLBACK = new NoneMirrorCredential(null, Collections.singleton(Pattern.compile("^.*$")));
 
     /**
+     * Returns the unique index of the credential.
+     */
+    @JsonProperty("id")
+    int index();
+
+    /**
      * Returns the ID of the credential.
      */
+    @JsonProperty("id")
     Optional<String> id();
 
     /**
      * Returns the {@link Pattern}s compiled from the regular expressions that match a host name.
      */
+    @JsonProperty("hostnamePatterns")
     Set<Pattern> hostnamePatterns();
 
     /**

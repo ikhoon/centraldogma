@@ -49,18 +49,18 @@ public interface Mirror {
      * Creates a new instance.
      *
      * @param schedule a cron expression that describes when the mirroring task is supposed to be triggered.
-     *                 If unspecified, {@code 0 * * * * ?} (every minute) is used.
+     * If unspecified, {@code 0 * * * * ?} (every minute) is used.
      * @param direction the direction of mirror
      * @param credential the authentication credentials which are required when accessing the Git repositories
      * @param localRepo the Central Dogma repository name
      * @param localPath the directory path in the {@code localRepo}
      * @param remoteUri the URI of the Git repository which will be mirrored from
      * @param gitignore the file pattern for the files in {@code remoteUri} which will not be mirrored.
-     *                  It follows the same format to <a href="https://git-scm.com/docs/gitignore">gitignore</a>
+     * It follows the same format to <a href="https://git-scm.com/docs/gitignore">gitignore</a>
      */
-    static Mirror of(Cron schedule, MirrorDirection direction, MirrorCredential credential,
-                     Repository localRepo, String localPath, URI remoteUri,
-                     @Nullable String gitignore, boolean enabled) {
+    static Mirror of(int index, String id, Cron schedule, MirrorDirection direction, MirrorCredential credential,
+                     Repository localRepo, String localPath, URI remoteUri, @Nullable String gitignore,
+                     boolean enabled) {
         requireNonNull(schedule, "schedule");
         requireNonNull(direction, "direction");
         requireNonNull(credential, "credential");
@@ -87,7 +87,7 @@ public interface Mirror {
                 final String remoteProject = matcher.group(1);
                 final String remoteRepo = matcher.group(2);
 
-                return new CentralDogmaMirror(schedule, direction, credential, localRepo, localPath,
+                return new CentralDogmaMirror(index, id, schedule, direction, credential, localRepo, localPath,
                                               remoteRepoUri, remoteProject, remoteRepo, components[1],
                                               gitignore, enabled);
             }
@@ -97,7 +97,7 @@ public interface Mirror {
             case SCHEME_GIT_HTTPS:
             case SCHEME_GIT_FILE: {
                 final String[] components = splitRemoteUri(remoteUri, "git", "master");
-                return new GitMirror(schedule, direction, credential, localRepo, localPath,
+                return new GitMirror(index, id, schedule, direction, credential, localRepo, localPath,
                                      URI.create(components[0]), components[1], components[2],
                                      gitignore, enabled);
             }
@@ -105,6 +105,16 @@ public interface Mirror {
 
         throw new IllegalArgumentException("unsupported scheme in remoteUri: " + remoteUri);
     }
+
+    /**
+     * Returns the index of the mirroring task.
+     */
+    int index();
+
+    /**
+     * Returns the ID of the mirroring task.
+     */
+    String id();
 
     /**
      * Returns the schedule for the mirroring task.

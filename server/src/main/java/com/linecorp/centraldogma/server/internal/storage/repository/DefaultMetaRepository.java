@@ -25,6 +25,7 @@ import com.linecorp.armeria.common.util.UnmodifiableFuture;
 import com.linecorp.centraldogma.common.Entry;
 import com.linecorp.centraldogma.common.Revision;
 import com.linecorp.centraldogma.internal.Jackson;
+import com.linecorp.centraldogma.server.internal.mirror.credential.AbstractMirrorCredential;
 import com.linecorp.centraldogma.server.mirror.Mirror;
 import com.linecorp.centraldogma.server.mirror.MirrorCredential;
 import com.linecorp.centraldogma.server.storage.repository.MetaRepository;
@@ -39,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepository {
@@ -51,8 +53,8 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
 
     private static final String PATH_CREDENTIALS_AND_MIRRORS = PATH_CREDENTIALS + ',' + PATH_MIRRORS;
 
-    private static final Map.Entry<Set<Mirror>, List<MirrorCredential>> EMPTY_MIRRORS_AND_CREDENTIALS =
-            Maps.immutableEntry(ImmutableSet.of(), ImmutableList.of());
+    private static final Map.Entry<List<Mirror>, List<MirrorCredential>> EMPTY_MIRRORS_AND_CREDENTIALS =
+            Maps.immutableEntry(ImmutableList.of(), ImmutableList.of());
 
     private final Lock mirrorLock = new ReentrantLock();
 
@@ -62,20 +64,20 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
     private volatile int mirrorRev = -1;
 
     @Nullable
-    private Map.Entry<Set<Mirror>, List<MirrorCredential>> mirrorsAndCredentials;
+    private Map.Entry<List<Mirror>, List<MirrorCredential>> mirrorsAndCredentials;
 
     public DefaultMetaRepository(Repository repo) {
         super(repo);
     }
 
     @Override
-    public CompletableFuture<Set<Mirror>> mirrors(boolean includeDisabled) {
+    public CompletableFuture<List<Mirror>> mirrors(boolean includeDisabled) {
         return mirrorsAndCredentials().thenApply(mirrorsAndCredentials -> {
-            final Set<Mirror> mirrors = mirrorsAndCredentials.getKey();
+            final List<Mirror> mirrors = mirrorsAndCredentials.getKey();
             if (includeDisabled) {
                 return mirrors;
             } else {
-                return mirrors.stream().filter(Mirror::enabled).collect(toImmutableSet());
+                return mirrors.stream().filter(Mirror::enabled).collect(toImmutableList());
             }
         });
     }
@@ -85,7 +87,7 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
         return mirrorsAndCredentials().thenApply(Map.Entry::getValue);
     }
 
-    public CompletableFuture<Map.Entry<Set<Mirror>, List<MirrorCredential>>> mirrorsAndCredentials() {
+    public CompletableFuture<Map.Entry<List<Mirror>, List<MirrorCredential>>> mirrorsAndCredentials() {
         // The head revision of meta repo will be increased if a mirror configuration is updated or
         // a repository is created or removed.
         final int headRev = normalizeNow(Revision.HEAD).major();
@@ -112,7 +114,7 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
         }
     }
 
-    private CompletableFuture<Map.Entry<Set<Mirror>, List<MirrorCredential>>> loadMirrorsAndCredentials(int rev) {
+    private CompletableFuture<Map.Entry<List<Mirror>, List<MirrorCredential>>> loadMirrorsAndCredentials(int rev) {
         return find(new Revision(rev), PATH_CREDENTIALS_AND_MIRRORS, Collections.emptyMap()).thenApply(
                 entries -> {
                     if (!entries.containsKey(PATH_MIRRORS)) {
@@ -131,14 +133,18 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
 
                     try {
                         final List<MirrorCredential> credentials = loadCredentials(entries);
-                        final ImmutableSet.Builder<Mirror> mirrors = ImmutableSet.builder();
+                        final ImmutableList.Builder<Mirror> mirrors = ImmutableList.builder();
 
+                        int index = 0;
                         for (JsonNode m : mirrorsJson) {
                             final MirrorConfig c = Jackson.treeToValue(m, MirrorConfig.class);
                             if (c == null) {
                                 throw new RepositoryMetadataException(PATH_MIRRORS + " contains null.");
                             }
-                            mirrors.addAll(c.toMirrors(parent(), credentials));
+                            final Mirror mirror = c.toMirror(parent(), credentials, index++);
+                            if (mirror != null) {
+                                mirrors.add(mirror);
+                            }
                         }
 
                         return Maps.immutableEntry(mirrors.build(), credentials);
@@ -153,7 +159,7 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
     private static List<MirrorCredential> loadCredentials(Map<String, Entry<?>> entries) throws Exception {
         final Entry<?> e = entries.get(PATH_CREDENTIALS);
         if (e == null) {
-            return Collections.emptyList();
+            return ImmutableList.of();
         }
 
         final JsonNode credentialsJson = (JsonNode) e.content();
@@ -167,12 +173,16 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
         }
 
         final ImmutableList.Builder<MirrorCredential> builder = ImmutableList.builder();
+        int index = 0;
         for (JsonNode c : credentialsJson) {
             final MirrorCredential credential = Jackson.treeToValue(c, MirrorCredential.class);
             if (credential == null) {
                 throw new RepositoryMetadataException(PATH_CREDENTIALS + " contains null.");
             }
+            assert credential instanceof AbstractMirrorCredential;
+            ((AbstractMirrorCredential) credential).setIndex(index);
             builder.add(credential);
+            index++;
         }
 
         return builder.build();

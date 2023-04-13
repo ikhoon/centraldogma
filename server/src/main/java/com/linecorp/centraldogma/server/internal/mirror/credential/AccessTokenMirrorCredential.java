@@ -42,6 +42,7 @@ public final class AccessTokenMirrorCredential extends AbstractMirrorCredential 
         this.accessToken = requireNonEmpty(accessToken, "accessToken");
     }
 
+    @JsonProperty("accessToken")
     public String accessToken() {
         return accessToken;
     }
