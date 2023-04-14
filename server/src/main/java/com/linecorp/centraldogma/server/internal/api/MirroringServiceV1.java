@@ -81,7 +81,7 @@ public class MirroringServiceV1 extends AbstractService {
         return projectManager().get(projectName).metaRepo().mirrors(true).thenApply(mirrors -> {
             if (index >= mirrors.size()) {
                 throw new EntryNotFoundException(
-                        "No such mirror is found at the index " + index + " in " + projectName);
+                        "No such mirror at the index " + index + " in " + projectName);
             }
             return convertToMirrorDto(projectName, mirrors.get(index));
         });
@@ -118,14 +118,11 @@ public class MirroringServiceV1 extends AbstractService {
      * <p>Returns the list of the credentials in the project.
      */
     @Get("/projects/{projectName}/credentials")
-    public CompletableFuture<List<MirrorCredentialDto>> listCredentials(@Param String projectName) {
+    public CompletableFuture<List<MirrorCredential>> listCredentials(@Param String projectName) {
         return projectManager()
                 .get(projectName)
                 .metaRepo()
-                .credentials()
-                .thenApply(credentials -> credentials.stream()
-                                                     .map(MirroringServiceV1::convertToMirrorCredentialDto)
-                                                     .collect(toImmutableList()));
+                .credentials();
     }
 
     /**
@@ -134,15 +131,15 @@ public class MirroringServiceV1 extends AbstractService {
      * <p>Returns the credential at the specified index in the project credential list.
      */
     @Get("/projects/{projectName}/credentials/{index}")
-    public CompletableFuture<MirrorCredentialDto> getCredential(@Param String projectName, @Param int index) {
+    public CompletableFuture<MirrorCredential> getCredential(@Param String projectName, @Param int index) {
         checkArgument(index >= 0, "index: %s (expected: >= 0)", index);
 
         return projectManager().get(projectName).metaRepo().credentials().thenApply(credentials -> {
             if (index >= credentials.size()) {
                 throw new EntryNotFoundException(
-                        "No such credential is found at the index " + index + " in " + projectName);
+                        "No such credential at the index " + index + " in " + projectName);
             }
-            return convertToMirrorCredentialDto(credentials.get(index));
+            return credentials.get(index);
         });
     }
 
@@ -174,7 +171,7 @@ public class MirroringServiceV1 extends AbstractService {
     private static MirrorDto convertToMirrorDto(String projectName, Mirror mirror) {
         final URI remoteRepoUri = mirror.remoteRepoUri();
         return new MirrorDto(mirror.index(),
-                             null, // TODO(ikhoon): Take the mirror ID from mirror form UI.
+                             mirror.id(),
                              projectName,
                              mirror.schedule().asString(),
                              mirror.direction().name(),
@@ -208,7 +205,7 @@ public class MirroringServiceV1 extends AbstractService {
             final byte[] passphrase = credential0.passphrase();
             final String passphraseString = passphrase != null ?
                                             new String(passphrase, StandardCharsets.UTF_8) : null;
-            return MirrorCredentialDto.ofPublicKey(index, id, hostnamePatterns,
+            return MirrorCredentialDto.ofPublicKey(index, id, hostnamePatterns, credential0.username(),
                                                    new String(credential0.publicKey(), StandardCharsets.UTF_8),
                                                    new String(credential0.privateKey(), StandardCharsets.UTF_8),
                                                    passphraseString);

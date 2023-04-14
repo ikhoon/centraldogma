@@ -16,8 +16,12 @@
 
 package com.linecorp.centraldogma.server.internal.storage.repository;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.linecorp.armeria.common.util.Exceptions;
@@ -41,7 +45,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepository {
 
@@ -117,37 +120,14 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
     private CompletableFuture<Map.Entry<List<Mirror>, List<MirrorCredential>>> loadMirrorsAndCredentials(int rev) {
         return find(new Revision(rev), PATH_CREDENTIALS_AND_MIRRORS, Collections.emptyMap()).thenApply(
                 entries -> {
-                    if (!entries.containsKey(PATH_MIRRORS)) {
-                        return EMPTY_MIRRORS_AND_CREDENTIALS;
-                    }
-
-                    final JsonNode mirrorsJson = (JsonNode) entries.get(PATH_MIRRORS).content();
-                    if (!mirrorsJson.isArray()) {
-                        throw new RepositoryMetadataException(
-                                PATH_MIRRORS + " must be an array: " + mirrorsJson.getNodeType());
-                    }
-
-                    if (mirrorsJson.isEmpty()) {
+                    if (entries.isEmpty()) {
                         return EMPTY_MIRRORS_AND_CREDENTIALS;
                     }
 
                     try {
-                        final List<MirrorCredential> credentials = loadCredentials(entries);
-                        final ImmutableList.Builder<Mirror> mirrors = ImmutableList.builder();
-
-                        int index = 0;
-                        for (JsonNode m : mirrorsJson) {
-                            final MirrorConfig c = Jackson.treeToValue(m, MirrorConfig.class);
-                            if (c == null) {
-                                throw new RepositoryMetadataException(PATH_MIRRORS + " contains null.");
-                            }
-                            final Mirror mirror = c.toMirror(parent(), credentials, index++);
-                            if (mirror != null) {
-                                mirrors.add(mirror);
-                            }
-                        }
-
-                        return Maps.immutableEntry(mirrors.build(), credentials);
+                        final List<MirrorCredential> credentials = parseCredentials(entries);
+                        final List<Mirror> mirrors = parseMirrors(entries, credentials);
+                        return Maps.immutableEntry(mirrors, credentials);
                     } catch (RepositoryMetadataException e) {
                         throw e;
                     } catch (Exception e) {
@@ -156,7 +136,39 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
                 });
     }
 
-    private static List<MirrorCredential> loadCredentials(Map<String, Entry<?>> entries) throws Exception {
+    private List<Mirror> parseMirrors(Map<String, Entry<?>> entries, List<MirrorCredential> credentials)
+            throws JsonProcessingException {
+        final Entry<?> e = entries.get(PATH_MIRRORS);
+        if (e == null) {
+            return ImmutableList.of();
+        }
+
+        final JsonNode mirrorsJson = (JsonNode) e.content();
+        if (!mirrorsJson.isArray()) {
+            throw new RepositoryMetadataException(
+                    PATH_MIRRORS+ " must be an array: " + mirrorsJson.getNodeType());
+        }
+        if (mirrorsJson.isEmpty()) {
+            return ImmutableList.of();
+        }
+
+        final ImmutableList.Builder<Mirror> mirrors = ImmutableList.builder();
+
+        int index = 0;
+        for (JsonNode m : mirrorsJson) {
+            final MirrorConfig c = Jackson.treeToValue(m, MirrorConfig.class);
+            if (c == null) {
+                throw new RepositoryMetadataException(PATH_MIRRORS + " contains null.");
+            }
+            final Mirror mirror = c.toMirror(parent(), credentials, index++);
+            if (mirror != null) {
+                mirrors.add(mirror);
+            }
+        }
+        return mirrors.build();
+    }
+
+    private static List<MirrorCredential> parseCredentials(Map<String, Entry<?>> entries) throws JsonProcessingException {
         final Entry<?> e = entries.get(PATH_CREDENTIALS);
         if (e == null) {
             return ImmutableList.of();
@@ -167,9 +179,8 @@ public class DefaultMetaRepository extends RepositoryWrapper implements MetaRepo
             throw new RepositoryMetadataException(
                     PATH_CREDENTIALS + " must be an array: " + credentialsJson.getNodeType());
         }
-
         if (credentialsJson.isEmpty()) {
-            return Collections.emptyList();
+            return ImmutableList.of();
         }
 
         final ImmutableList.Builder<MirrorCredential> builder = ImmutableList.builder();

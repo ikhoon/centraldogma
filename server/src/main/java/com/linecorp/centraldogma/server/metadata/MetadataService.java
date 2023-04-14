@@ -1019,7 +1019,7 @@ public class MetadataService {
     public CompletableFuture<Revision> updateMirror(String projectName, int index,
                                                     MirrorDto mirrorDto, Author author) {
 
-        final String summary = "Update the new mirror. ID: " + mirrorDto.id();
+        final String summary = "Update the mirror '" + mirrorDto.id() +'\'';
         final MirrorConfig mirrorConfig = converterToMirrorConfig(mirrorDto);
         final JsonNode jsonNode = convertToJsonNodeAndRemoveIndex(mirrorConfig);
         final Change<JsonNode> change = Change.ofJsonPatch(
@@ -1067,7 +1067,7 @@ public class MetadataService {
                                                         MirrorCredential credential, Author author) {
         checkArgument(credential.id().isPresent(), "Credential ID should not be null");
 
-        final String summary = "Update the mirror credential. ID: " + credential.id().get();
+        final String summary = "Update the mirror credential '" + credential.id().get() + '\'';
         final JsonNode jsonNode = convertToJsonNodeAndRemoveIndex(credential);
         final Change<JsonNode> change = Change.ofJsonPatch(
                 PATH_CREDENTIALS, asJsonArray(new ReplaceOperation(JsonPointer.compile("/" + index),

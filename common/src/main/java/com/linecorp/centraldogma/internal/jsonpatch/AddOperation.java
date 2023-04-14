@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 
 import com.linecorp.centraldogma.internal.Jackson;
 
@@ -92,7 +93,7 @@ public final class AddOperation extends PathValueOperation {
         if (path.toString().isEmpty()) {
             return valueCopy();
         }
-        if (node.isNull() && path.head().getMatchingProperty().isEmpty() &&
+        if (node.isNull() && Strings.isNullOrEmpty(path.head().getMatchingProperty()) &&
             path.last().getMatchingProperty().equals(LAST_ARRAY_ELEMENT)) {
             // The operation adds `value` to the root array node.
             // If the root node is null, create an empty array so that the array can be added.

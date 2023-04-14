@@ -116,6 +116,12 @@ public final class MirrorConfig {
                          parent.repos().get(localRepo), localPath, remoteUri, gitignore, enabled);
     }
 
+    @JsonProperty("id")
+    @Nullable
+    public String id() {
+        return id;
+    }
+
     @JsonProperty("enabled")
     public boolean enabled() {
         return enabled;
@@ -142,12 +148,10 @@ public final class MirrorConfig {
         return remoteUri.toString();
     }
 
+    @JsonProperty("gitignore")
     @Nullable
-    public List<String> gitignore() {
-        if (gitignore == null) {
-            return null;
-        }
-        return gitignoreSplitter.splitToList(gitignore);
+    public String gitignore() {
+        return gitignore;
     }
 
     @Nullable

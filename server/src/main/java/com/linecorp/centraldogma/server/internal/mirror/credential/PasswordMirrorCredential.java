@@ -46,10 +46,12 @@ public final class PasswordMirrorCredential extends AbstractMirrorCredential {
         this.password = requireNonNull(password, "password");
     }
 
+    @JsonProperty("username")
     public String username() {
         return username;
     }
 
+    @JsonProperty("password")
     public String password() {
         return password;
     }

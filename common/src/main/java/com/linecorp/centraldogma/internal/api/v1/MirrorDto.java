@@ -3,6 +3,7 @@ package com.linecorp.centraldogma.internal.api.v1;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -144,16 +145,50 @@ public final class MirrorDto {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MirrorDto)) {
+            return false;
+        }
+        final MirrorDto mirrorDto = (MirrorDto) o;
+        return enabled == mirrorDto.enabled &&
+               Objects.equals(index, mirrorDto.index) &&
+               Objects.equals(id, mirrorDto.id) &&
+               projectName.equals(mirrorDto.projectName) &&
+               schedule.equals(mirrorDto.schedule) &&
+               direction.equals(mirrorDto.direction) &&
+               localRepo.equals(mirrorDto.localRepo) &&
+               localPath.equals(mirrorDto.localPath) &&
+               remoteScheme.equals(mirrorDto.remoteScheme) &&
+               remoteUrl.equals(mirrorDto.remoteUrl) &&
+               remotePath.equals(mirrorDto.remotePath) &&
+               remoteBranch.equals(mirrorDto.remoteBranch) &&
+               Objects.equals(gitignore, mirrorDto.gitignore) &&
+               Objects.equals(credentialId, mirrorDto.credentialId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index, id, projectName, schedule, direction, localRepo, localPath, remoteScheme,
+                            remoteUrl, remotePath, remoteBranch, gitignore, credentialId, enabled);
+    }
+
+    @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                           .omitNullValues()
+                          .add("index", index)
                           .add("id", id)
                           .add("projectName", projectName)
                           .add("schedule", schedule)
                           .add("direction", direction)
                           .add("localRepo", localRepo)
                           .add("localPath", localPath)
+                          .add("remoteScheme", remoteScheme)
                           .add("remoteUrl", remoteUrl)
+                            .add("remotePath", remotePath)
                           .add("gitignore", gitignore)
                           .add("credentialId", credentialId)
                           .add("enabled", enabled)

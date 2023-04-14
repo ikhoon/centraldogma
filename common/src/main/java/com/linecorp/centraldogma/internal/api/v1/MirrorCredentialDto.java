@@ -16,6 +16,7 @@
 
 package com.linecorp.centraldogma.internal.api.v1;
 
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -43,9 +44,9 @@ public final class MirrorCredentialDto {
     }
 
     public static MirrorCredentialDto ofPublicKey(int index, @Nullable String id, Set<String> hostnamePatterns,
-                                                  String publicKey, String privateKey,
+                                                  String username, String publicKey, String privateKey,
                                                   @Nullable String passphrase) {
-        return new MirrorCredentialDto(index, id, "public_key", hostnamePatterns, null, null, null,
+        return new MirrorCredentialDto(index, id, "public_key", hostnamePatterns, username, null, null,
                                        publicKey, privateKey, passphrase);
     }
 
@@ -90,8 +91,7 @@ public final class MirrorCredentialDto {
     @Nullable
     private final String passphrase;
 
-    private MirrorCredentialDto(int index, @Nullable String id, String type,
-                                Set<String> hostnamePatterns,
+    private MirrorCredentialDto(int index, @Nullable String id, String type, Set<String> hostnamePatterns,
                                 @Nullable String username, @Nullable String password,
                                 @Nullable String accessToken, @Nullable String publicKey,
                                 @Nullable String privateKey, @Nullable String passphrase) {
@@ -162,6 +162,34 @@ public final class MirrorCredentialDto {
     @Nullable
     public String passphrase() {
         return passphrase;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MirrorCredentialDto)) {
+            return false;
+        }
+
+        final MirrorCredentialDto that = (MirrorCredentialDto) o;
+        return index == that.index &&
+               Objects.equals(id, that.id) &&
+               type.equals(that.type) &&
+               hostnamePatterns.equals(that.hostnamePatterns) &&
+               Objects.equals(username, that.username) &&
+               Objects.equals(password, that.password) &&
+               Objects.equals(accessToken, that.accessToken) &&
+               Objects.equals(publicKey, that.publicKey) &&
+               Objects.equals(privateKey, that.privateKey) &&
+               Objects.equals(passphrase, that.passphrase);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index, id, type, hostnamePatterns, username, password, accessToken,
+                            publicKey, privateKey, passphrase);
     }
 
     @Override

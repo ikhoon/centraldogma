@@ -49,7 +49,6 @@ public interface MirrorCredential {
     /**
      * Returns the unique index of the credential.
      */
-    @JsonProperty("id")
     int index();
 
     /**
