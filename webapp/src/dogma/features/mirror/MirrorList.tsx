@@ -49,7 +49,7 @@ const MirrorList = <Data extends object>({ projectName }: MirrorListProps<Data>)
     ],
     [columnHelper, projectName],
   );
-  return <DataTableClientPagination columns={columns as ColumnDef<Data>[]} data={data || []} />;
+  return <DataTableClientPagination columns={columns as ColumnDef<MirrorDto>[]} data={data || []} />;
 };
 
 export default MirrorList;

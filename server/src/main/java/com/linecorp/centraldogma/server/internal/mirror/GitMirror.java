@@ -129,11 +129,11 @@ public final class GitMirror extends AbstractMirror {
     @Nullable
     private IgnoreNode ignoreNode;
 
-    public GitMirror(int index, String id, Cron schedule, MirrorDirection direction, MirrorCredential credential,
+    public GitMirror(int index, @Nullable String id, Cron schedule, MirrorDirection direction, MirrorCredential credential,
                      Repository localRepo, String localPath,
                      URI remoteRepoUri, String remotePath, String remoteBranch,
                      @Nullable String gitignore, boolean enabled) {
-        super(index, schedule, direction, credential, localRepo, localPath, remoteRepoUri, remotePath, remoteBranch,
+        super(index, id, schedule, direction, credential, localRepo, localPath, remoteRepoUri, remotePath, remoteBranch,
               gitignore, enabled);
 
         if (gitignore != null) {

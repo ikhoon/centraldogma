@@ -1,5 +1,6 @@
 export interface MirrorDto {
-  name: string;
+  index: number;
+  id: string;
   projectName: string;
   schedule: string;
   direction: 'REMOTE_TO_LOCAL' | 'LOCAL_TO_REMOTE';

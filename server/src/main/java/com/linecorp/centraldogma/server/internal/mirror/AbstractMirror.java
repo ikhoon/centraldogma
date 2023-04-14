@@ -98,6 +98,11 @@ public abstract class AbstractMirror implements Mirror {
     }
 
     @Override
+    public String id() {
+        return id;
+    }
+
+    @Override
     public final Cron schedule() {
         return schedule;
     }

@@ -32,6 +32,7 @@ import com.cronutils.model.Cron;
 import com.cronutils.model.CronType;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.parser.CronParser;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -67,7 +68,8 @@ class DefaultMirroringServiceTest {
         when(r.parent()).thenReturn(p);
         when(r.name()).thenReturn("bar");
 
-        final Mirror mirror = new AbstractMirror(EVERY_SECOND, MirrorDirection.REMOTE_TO_LOCAL,
+        final Mirror mirror = new AbstractMirror(0, "my-mirror-1", EVERY_SECOND,
+                                                 MirrorDirection.REMOTE_TO_LOCAL,
                                                  MirrorCredential.FALLBACK, r, "/",
                                                  URI.create("unused://uri"), "/", null, null, true) {
             @Override
@@ -82,7 +84,7 @@ class DefaultMirroringServiceTest {
             }
         };
 
-        when(mr.mirrors()).thenReturn(CompletableFuture.completedFuture(ImmutableSet.of(mirror)));
+        when(mr.mirrors()).thenReturn(CompletableFuture.completedFuture(ImmutableList.of(mirror)));
 
         final DefaultMirroringService service = new DefaultMirroringService(
                 temporaryFolder, pm, new SimpleMeterRegistry(), 1, 1, 1);

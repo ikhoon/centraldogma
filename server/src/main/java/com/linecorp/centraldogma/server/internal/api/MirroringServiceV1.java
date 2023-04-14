@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
+import com.linecorp.armeria.common.HttpStatus;
 import com.linecorp.armeria.server.annotation.ConsumesJson;
 import com.linecorp.armeria.server.annotation.ExceptionHandler;
 import com.linecorp.armeria.server.annotation.Get;
@@ -21,6 +22,7 @@ import com.linecorp.armeria.server.annotation.Param;
 import com.linecorp.armeria.server.annotation.Post;
 import com.linecorp.armeria.server.annotation.ProducesJson;
 import com.linecorp.armeria.server.annotation.Put;
+import com.linecorp.armeria.server.annotation.StatusCode;
 import com.linecorp.centraldogma.common.Author;
 import com.linecorp.centraldogma.common.EntryNotFoundException;
 import com.linecorp.centraldogma.common.Revision;
@@ -68,39 +70,20 @@ public class MirroringServiceV1 extends AbstractService {
     }
 
     /**
-     * GET /projects/{projectName}/mirrors?id={id} or GET /projects/{projectName}/mirrors?index={index}
+     * GET /projects/{projectName}/mirrors/{index}
      *
-     * <p>Returns the mirror whose ID or index matches in the project.
+     * <p>Returns the mirror at the specified index in the project mirror list.
      */
-    @Get("/projects/{projectName}/mirrors")
-    public CompletableFuture<MirrorDto> getMirror(@Param String projectName, @Param @Nullable Integer index,
-                                                  @Param @Nullable String id) {
-        if (index == null && id == null) {
-            throw new IllegalArgumentException("Either index or id must be specified");
-        }
-        if (index != null && id != null) {
-            throw new IllegalArgumentException("Either index or id must be specified, not both");
-        }
-        if (index != null) {
-            checkArgument(index >= 0, "index: %s (expected: >= 0)", index);
-        }
+    @Get("/projects/{projectName}/mirrors/{index}")
+    public CompletableFuture<MirrorDto> getMirror(@Param String projectName, @Param int index) {
+        checkArgument(index >= 0, "index: %s (expected: >= 0)", index);
 
         return projectManager().get(projectName).metaRepo().mirrors(true).thenApply(mirrors -> {
-            Mirror mirror;
-            if (index != null) {
-                if (index >= mirrors.size()) {
-                    throw new EntryNotFoundException(
-                            "No such mirror at the index " + index + " in " + projectName);
-                }
-                mirror = mirrors.get(index);
-            } else {
-                mirror = mirrors.stream().filter(m -> id.equals(m.id()))
-                                .findFirst()
-                                .orElseThrow(() -> new EntryNotFoundException(
-                                        "No such mirror with the ID " + id + " in " + projectName));
+            if (index >= mirrors.size()) {
+                throw new EntryNotFoundException(
+                        "No such mirror is found at the index " + index + " in " + projectName);
             }
-
-            return convertToMirrorDto(projectName, mirror);
+            return convertToMirrorDto(projectName, mirrors.get(index));
         });
     }
 
@@ -111,11 +94,17 @@ public class MirroringServiceV1 extends AbstractService {
      */
     @Post("/projects/{projectName}/mirrors")
     @ConsumesJson
+    @StatusCode(201)
     public CompletableFuture<Revision> createMirror(@Param String projectName, MirrorDto newMirror,
                                                     Author author) {
         return mds.createMirror(projectName, newMirror, author);
     }
 
+    /**
+     * PUT /projects/{projectName}/mirrors/{index}
+     *
+     * <p>Update the exising mirror.
+     */
     @Put("/projects/{projectName}/mirrors/{index}")
     @ConsumesJson
     public CompletableFuture<Revision> updateMirror(@Param String projectName, @Param int index,
@@ -123,6 +112,11 @@ public class MirroringServiceV1 extends AbstractService {
         return mds.updateMirror(projectName, index, newMirror, author);
     }
 
+    /**
+     * GET /projects/{projectName}/credentials
+     *
+     * <p>Returns the list of the credentials in the project.
+     */
     @Get("/projects/{projectName}/credentials")
     public CompletableFuture<List<MirrorCredentialDto>> listCredentials(@Param String projectName) {
         return projectManager()
@@ -134,13 +128,42 @@ public class MirroringServiceV1 extends AbstractService {
                                                      .collect(toImmutableList()));
     }
 
+    /**
+     * GET /projects/{projectName}/credentials/{index}
+     *
+     * <p>Returns the credential at the specified index in the project credential list.
+     */
+    @Get("/projects/{projectName}/credentials/{index}")
+    public CompletableFuture<MirrorCredentialDto> getCredential(@Param String projectName, @Param int index) {
+        checkArgument(index >= 0, "index: %s (expected: >= 0)", index);
+
+        return projectManager().get(projectName).metaRepo().credentials().thenApply(credentials -> {
+            if (index >= credentials.size()) {
+                throw new EntryNotFoundException(
+                        "No such credential is found at the index " + index + " in " + projectName);
+            }
+            return convertToMirrorCredentialDto(credentials.get(index));
+        });
+    }
+
+    /**
+     * POST /projects/{projectName}/credentials
+     *
+     * <p>Creates a new credential.
+     */
     @Post("/projects/{projectName}/credentials")
     @ConsumesJson
+    @StatusCode(201)
     public CompletableFuture<Revision> createCredential(@Param String projectName,
                                                         MirrorCredential credential, Author author) {
         return mds.createCredential(projectName, credential, author);
     }
 
+    /**
+     * PUT /projects/{projectName}/credentials/{index}
+     *
+     * <p>Update the existing credential.
+     */
     @Put("/projects/{projectName}/credentials/{index}")
     @ConsumesJson
     public CompletableFuture<Revision> updateCredential(@Param String projectName, @Param int index,

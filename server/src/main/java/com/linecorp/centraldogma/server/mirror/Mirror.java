@@ -58,7 +58,7 @@ public interface Mirror {
      * @param gitignore the file pattern for the files in {@code remoteUri} which will not be mirrored.
      * It follows the same format to <a href="https://git-scm.com/docs/gitignore">gitignore</a>
      */
-    static Mirror of(int index, String id, Cron schedule, MirrorDirection direction, MirrorCredential credential,
+    static Mirror of(int index, @Nullable String id, Cron schedule, MirrorDirection direction, MirrorCredential credential,
                      Repository localRepo, String localPath, URI remoteUri, @Nullable String gitignore,
                      boolean enabled) {
         requireNonNull(schedule, "schedule");
@@ -114,6 +114,7 @@ public interface Mirror {
     /**
      * Returns the ID of the mirroring task.
      */
+    @Nullable
     String id();
 
     /**

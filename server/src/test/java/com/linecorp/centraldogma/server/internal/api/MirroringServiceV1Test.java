@@ -38,6 +38,7 @@ import com.linecorp.centraldogma.client.CentralDogma;
 import com.linecorp.centraldogma.client.CentralDogmaRepository;
 import com.linecorp.centraldogma.common.Entry;
 import com.linecorp.centraldogma.common.Revision;
+import com.linecorp.centraldogma.internal.api.v1.MirrorDto;
 import com.linecorp.centraldogma.testing.junit.CentralDogmaExtension;
 
 class MirroringServiceV1Test {
@@ -58,64 +59,38 @@ class MirroringServiceV1Test {
     @Test
     void createNewMirrorConfiguration() throws JsonParseException {
         final BlockingWebClient client = dogma.blockingHttpClient();
+        final MirrorDto newMirror = new MirrorDto(null,
+                                                  "mirrorId",
+                                                  FOO_PROJ,
+                                                  "5 * * * * ?",
+                                                  "REMOTE_TO_LOCAL",
+                                                  "BAR_REPO",
+                                                  "/local-path",
+                                                  "git+https",
+                                                  "github.com/line/centraldogma-authtest.git",
+                                                  "/remote-path",
+                                                  "mirror-branch",
+                                                  ".my-env0\n.my-env1",
+                                                  "my-credential-0",
+                                                  true);
         final ResponseEntity<Revision> revision =
                 client.prepare()
-                      .post("/api/v1/mirrors/projects/{proj}")
+                      .post("/api/v1/projects/{proj}/mirrors")
                       .pathParam("proj", FOO_PROJ)
                       .header(HttpHeaderNames.AUTHORIZATION, "Bearer anonymous")
-                      .content(MediaType.JSON, '{' +
-                                               "  \"name\" : \"Git mirror configation for the cart service\", " +
-                                               "  \"schedule\": \"5 * * * * ?\"," +
-                                               "  \"direction\": \"REMOTE_TO_LOCAL\"," +
-                                               "  \"localRepo\": \"" + BAR_REPO + "\"," +
-                                               "  \"localPath\": \"/abc\"," +
-                                               "  \"remoteScheme\": \"git+https\"," +
-                                               "  \"remoteUrl\": \"github.com/line/centraldogma-authtest.git\"," +
-                                               "  \"remotePath\": \"/\"," +
-                                               "  \"remoteBranch\": \"master\"," +
-                                               "  \"gitignore\": []," +
-                                               // TODO(ikhoon): Test with credentialId
-//                                               "  \"credentialId\": \"my-credential\"," +
-                                               "  \"enabled\": true" +
-                                               '}')
+                      .contentJson(newMirror)
                       .asJson(Revision.class)
                       .execute();
         assertThat(revision.content().major()).isEqualTo(2);
-        final CentralDogmaRepository repo = dogma.client().forRepo(FOO_PROJ, "meta");
-        final Entry<?> entry = repo.file("/mirrors.json").get().join();
-        assertThatJson(entry.contentAsJson())
-                .isEqualTo("[{" +
-                           "  \"type\": \"single\"," +
-                           "  \"enabled\": true," +
-                           "  \"schedule\": \"5 * * * * ?\"," +
-                           "  \"direction\": \"REMOTE_TO_LOCAL\"," +
-                           "  \"localRepo\": \"" + BAR_REPO + "\"," +
-                           "  \"localPath\": \"/abc\"," +
-                           "  \"remoteUri\": \"git+https://github.com/line/centraldogma-authtest.git/#master\"" +
-//                           "  \"credentialId\": \"my-credential\"" +
-                           "}]");
-
-        final ArrayNode response = client.prepare()
-                                        .get("/api/v1/mirrors/projects/{proj}")
-                                        .pathParam("proj", FOO_PROJ)
-                                        .header(HttpHeaderNames.AUTHORIZATION, "Bearer anonymous")
-                                        .asJson(ArrayNode.class)
-                                        .execute()
-                                        .content();
-        assertThat(response.size()).isOne();
-        assertThatJson(response)
-                .isEqualTo("[{" +
-                           "  \"schedule\": \"5 * * * * ?\"," +
-                           "  \"direction\": \"REMOTE_TO_LOCAL\"," +
-                           "  \"localRepo\": \"" + BAR_REPO + "\"," +
-                           "  \"localPath\": \"/abc/\"," +
-                           "  \"remoteScheme\": \"git+https\"," +
-                           "  \"remoteUrl\": \"github.com/line/centraldogma-authtest.git\"," +
-                           "  \"remotePath\": \"/\"," +
-                           "  \"remoteBranch\": \"master\"," +
-                           "  \"gitignore\": []," +
-//                           "  \"credentialId\": \"my-credential\"," +
-                           "  \"enabled\": true" +
-                           "}]");
+        final ResponseEntity<MirrorDto> response = client.prepare()
+                                                         .get("/api/v1/projects/{proj}/mirrors/{index}")
+                                                         .pathParam("proj", FOO_PROJ)
+                                                         .pathParam("index", 0)
+                                                         .header(HttpHeaderNames.AUTHORIZATION,
+                                                                 "Bearer anonymous")
+                                                         .asJson(MirrorDto.class)
+                                                         .execute();
+        final MirrorDto savedMirror = response.content();
+        assertThat(savedMirror.index()).isEqualTo(0);
     }
 }

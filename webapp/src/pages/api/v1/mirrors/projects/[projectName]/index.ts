@@ -15,16 +15,18 @@
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MirrorDto } from 'dogma/features/metadata/MirrorDto';
+import { MirrorDto } from "dogma/features/mirror/MirrorDto";
 
-let mirrorConfigs: MirrorDto[] = [];
+const mirrorConfigs: MirrorDto[] = [];
 for (let i = 0; i < 10; i++) {
   mirrorConfigs.push({
-    name: `mirror-${i}`,
+    index: i,
+    id: `mirror-${i}`,
+    projectName: `project-${i}`,
     credentialId: `credential-${i}`,
     direction: 'LOCAL_TO_REMOTE',
     enabled: true,
-    gitignore: [`ignore${i}`],
+    gitignore: `ignore${i}`,
     localPath: `/local/path/${i}`,
     localRepo: `local-repo-${i}`,
     remotePath: `/remote/path/${i}`,

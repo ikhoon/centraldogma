@@ -102,7 +102,7 @@ const NewMirrorPage = () => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <Center>
         <VStack width='80%' align='left'>
-          <Heading align='center'>New mirror for '{projectName}' project</Heading>
+          <Heading align='center'>New mirror for <b>{projectName}</b> project</Heading>
           <FormControl isRequired>
             <FormLabel><LabelledIcon icon={GiMirrorMirror} text='Name' /></FormLabel>
             <Input
