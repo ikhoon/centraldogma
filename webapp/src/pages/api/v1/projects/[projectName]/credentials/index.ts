@@ -14,17 +14,17 @@
  * under the License.
  */
 
-import { NextApiRequest, NextApiResponse } from 'next';
-import { MirrorDto } from "dogma/features/mirror/MirrorDto";
+import {NextApiRequest, NextApiResponse} from 'next';
+import {MirrorDto} from "dogma/features/mirror/MirrorDto";
 
-const mirrorConfigs: MirrorDto[] = [];
+let mirrors: MirrorDto[] = [];
 for (let i = 0; i < 10; i++) {
-  mirrorConfigs.push({
+  mirrors.push({
     index: i,
     id: `mirror-${i}`,
     projectName: `project-${i}`,
     credentialId: `credential-${i}`,
-    direction: 'LOCAL_TO_REMOTE',
+    direction: 'REMOTE_TO_LOCAL',
     enabled: true,
     gitignore: `ignore${i}`,
     localPath: `/local/path/${i}`,
@@ -36,14 +36,19 @@ for (let i = 0; i < 10; i++) {
   });
 }
 
-let revision = mirrorConfigs.length + 1;
+let revision = mirrors.length + 2;
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
     case 'GET':
-      res.status(200).json(mirrorConfigs);
+      const projectName = req.query.projectName as string;
+      mirrors = mirrors.map(mirror => {
+        mirror.projectName = projectName
+        return mirror;
+      });
+      res.status(200).json(mirrors);
       break;
     case 'POST':
-      mirrorConfigs.push(req.body);
+      mirrors.push(req.body);
       res.status(201).json(`${++revision}`);
       break;
     default:

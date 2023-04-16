@@ -70,6 +70,18 @@ public class MirroringServiceV1 extends AbstractService {
     }
 
     /**
+     * POST /projects/{projectName}/mirrors
+     *
+     * <p>Creates a new mirror.
+     */
+    @Post("/projects/{projectName}/mirrors")
+    @ConsumesJson
+    @StatusCode(201)
+    public CompletableFuture<Revision> createMirror(@Param String projectName, MirrorDto newMirror, Author author) {
+        return mds.createMirror(projectName, newMirror, author);
+    }
+
+    /**
      * GET /projects/{projectName}/mirrors/{index}
      *
      * <p>Returns the mirror at the specified index in the project mirror list.
@@ -88,19 +100,6 @@ public class MirroringServiceV1 extends AbstractService {
     }
 
     /**
-     * POST /projects/{projectName}/mirrors
-     *
-     * <p>Creates a new mirror.
-     */
-    @Post("/projects/{projectName}/mirrors")
-    @ConsumesJson
-    @StatusCode(201)
-    public CompletableFuture<Revision> createMirror(@Param String projectName, MirrorDto newMirror,
-                                                    Author author) {
-        return mds.createMirror(projectName, newMirror, author);
-    }
-
-    /**
      * PUT /projects/{projectName}/mirrors/{index}
      *
      * <p>Update the exising mirror.
@@ -110,62 +109,6 @@ public class MirroringServiceV1 extends AbstractService {
     public CompletableFuture<Revision> updateMirror(@Param String projectName, @Param int index,
                                                     MirrorDto newMirror, Author author) {
         return mds.updateMirror(projectName, index, newMirror, author);
-    }
-
-    /**
-     * GET /projects/{projectName}/credentials
-     *
-     * <p>Returns the list of the credentials in the project.
-     */
-    @Get("/projects/{projectName}/credentials")
-    public CompletableFuture<List<MirrorCredential>> listCredentials(@Param String projectName) {
-        return projectManager()
-                .get(projectName)
-                .metaRepo()
-                .credentials();
-    }
-
-    /**
-     * GET /projects/{projectName}/credentials/{index}
-     *
-     * <p>Returns the credential at the specified index in the project credential list.
-     */
-    @Get("/projects/{projectName}/credentials/{index}")
-    public CompletableFuture<MirrorCredential> getCredential(@Param String projectName, @Param int index) {
-        checkArgument(index >= 0, "index: %s (expected: >= 0)", index);
-
-        return projectManager().get(projectName).metaRepo().credentials().thenApply(credentials -> {
-            if (index >= credentials.size()) {
-                throw new EntryNotFoundException(
-                        "No such credential at the index " + index + " in " + projectName);
-            }
-            return credentials.get(index);
-        });
-    }
-
-    /**
-     * POST /projects/{projectName}/credentials
-     *
-     * <p>Creates a new credential.
-     */
-    @Post("/projects/{projectName}/credentials")
-    @ConsumesJson
-    @StatusCode(201)
-    public CompletableFuture<Revision> createCredential(@Param String projectName,
-                                                        MirrorCredential credential, Author author) {
-        return mds.createCredential(projectName, credential, author);
-    }
-
-    /**
-     * PUT /projects/{projectName}/credentials/{index}
-     *
-     * <p>Update the existing credential.
-     */
-    @Put("/projects/{projectName}/credentials/{index}")
-    @ConsumesJson
-    public CompletableFuture<Revision> updateCredential(@Param String projectName, @Param int index,
-                                                        MirrorCredential credential, Author author) {
-        return mds.updateCredential(projectName, index, credential, author);
     }
 
     private static MirrorDto convertToMirrorDto(String projectName, Mirror mirror) {
@@ -184,35 +127,5 @@ public class MirroringServiceV1 extends AbstractService {
                              mirror.gitignore(),
                              mirror.credential().id().orElse(null),
                              mirror.enabled());
-    }
-
-    private static MirrorCredentialDto convertToMirrorCredentialDto(MirrorCredential credential) {
-        final int index = credential.index();
-        final String id = credential.id().orElse(null);
-        final Set<String> hostnamePatterns = credential.hostnamePatterns().stream()
-                                                       .map(Pattern::pattern)
-                                                       .collect(toImmutableSet());
-
-        if (credential instanceof PasswordMirrorCredential) {
-            final PasswordMirrorCredential credential0 = (PasswordMirrorCredential) credential;
-            return MirrorCredentialDto.ofPassword(index, id, hostnamePatterns,
-                                                  credential0.username(), credential0.password());
-        } else if (credential instanceof AccessTokenMirrorCredential) {
-            final AccessTokenMirrorCredential credential0 = (AccessTokenMirrorCredential) credential;
-            return MirrorCredentialDto.ofAccessToken(index, id, hostnamePatterns, credential0.accessToken());
-        } else if (credential instanceof PublicKeyMirrorCredential) {
-            final PublicKeyMirrorCredential credential0 = (PublicKeyMirrorCredential) credential;
-            final byte[] passphrase = credential0.passphrase();
-            final String passphraseString = passphrase != null ?
-                                            new String(passphrase, StandardCharsets.UTF_8) : null;
-            return MirrorCredentialDto.ofPublicKey(index, id, hostnamePatterns, credential0.username(),
-                                                   new String(credential0.publicKey(), StandardCharsets.UTF_8),
-                                                   new String(credential0.privateKey(), StandardCharsets.UTF_8),
-                                                   passphraseString);
-        } else if (credential instanceof NoneMirrorCredential) {
-            return MirrorCredentialDto.ofNone(index, id, hostnamePatterns);
-        } else {
-            throw new Error("unknown credential type: " + credential.getClass().getName());
-        }
     }
 }
