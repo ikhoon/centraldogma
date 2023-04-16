@@ -15,16 +15,6 @@
  */
 package com.linecorp.centraldogma.testing.junit;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-
-import org.junit.jupiter.api.extension.Extension;
-import org.junit.jupiter.api.extension.ExtensionContext;
-
-import com.spotify.futures.CompletableFutures;
-
 import com.linecorp.armeria.client.BlockingWebClient;
 import com.linecorp.armeria.client.WebClient;
 import com.linecorp.armeria.client.WebClientBuilder;
@@ -35,6 +25,14 @@ import com.linecorp.centraldogma.server.CentralDogmaBuilder;
 import com.linecorp.centraldogma.server.MirroringService;
 import com.linecorp.centraldogma.testing.internal.CentralDogmaRuleDelegate;
 import com.linecorp.centraldogma.testing.internal.TemporaryFolder;
+import com.spotify.futures.CompletableFutures;
+import org.junit.jupiter.api.extension.Extension;
+import org.junit.jupiter.api.extension.ExtensionContext;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * A JUnit {@link Extension} that starts an embedded Central Dogma server.

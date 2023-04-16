@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -45,7 +44,7 @@ import com.linecorp.centraldogma.server.internal.mirror.credential.PublicKeyMirr
 import com.linecorp.centraldogma.server.mirror.MirrorCredential;
 import com.linecorp.centraldogma.testing.junit.CentralDogmaExtension;
 
-class MirroringServiceV1Test {
+class MirroringAndCredentialServiceV1Test {
 
     private static final String FOO_PROJ = "foo-proj";
     private static final String BAR_REPO = "bar-repo";

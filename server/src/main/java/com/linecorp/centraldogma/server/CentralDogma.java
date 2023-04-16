@@ -55,6 +55,7 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
+import com.linecorp.centraldogma.server.internal.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,14 +125,6 @@ import com.linecorp.centraldogma.server.internal.admin.service.DefaultLogoutServ
 import com.linecorp.centraldogma.server.internal.admin.service.RepositoryService;
 import com.linecorp.centraldogma.server.internal.admin.service.UserService;
 import com.linecorp.centraldogma.server.internal.admin.util.RestfulJsonResponseConverter;
-import com.linecorp.centraldogma.server.internal.api.AdministrativeService;
-import com.linecorp.centraldogma.server.internal.api.ContentServiceV1;
-import com.linecorp.centraldogma.server.internal.api.MetadataApiService;
-import com.linecorp.centraldogma.server.internal.api.MirroringServiceV1;
-import com.linecorp.centraldogma.server.internal.api.ProjectServiceV1;
-import com.linecorp.centraldogma.server.internal.api.RepositoryServiceV1;
-import com.linecorp.centraldogma.server.internal.api.TokenService;
-import com.linecorp.centraldogma.server.internal.api.WatchService;
 import com.linecorp.centraldogma.server.internal.api.auth.ApplicationTokenAuthorizer;
 import com.linecorp.centraldogma.server.internal.api.converter.HttpApiRequestConverter;
 import com.linecorp.centraldogma.server.internal.api.converter.HttpApiResponseConverter;
@@ -688,26 +681,29 @@ public class CentralDogma implements AutoCloseable {
 
         sb.annotatedService(API_V1_PATH_PREFIX,
                             new AdministrativeService(safePm, executor), decorator,
-                            v1RequestConverter, v1ResponseConverter);
+                v1RequestConverter, v1ResponseConverter);
         sb.annotatedService(API_V1_PATH_PREFIX,
-                            new ProjectServiceV1(safePm, executor, mds), decorator,
-                            v1RequestConverter, v1ResponseConverter);
+                new ProjectServiceV1(safePm, executor, mds), decorator,
+                v1RequestConverter, v1ResponseConverter);
         sb.annotatedService(API_V1_PATH_PREFIX,
-                            new RepositoryServiceV1(safePm, executor, mds), decorator,
-                            v1RequestConverter, v1ResponseConverter);
+                new RepositoryServiceV1(safePm, executor, mds), decorator,
+                v1RequestConverter, v1ResponseConverter);
         sb.annotatedService(API_V1_PATH_PREFIX,
-                            new MirroringServiceV1(safePm, executor, mds), decorator,
-                            v1RequestConverter, v1RequestConverter);
+                new MirroringServiceV1(safePm, executor, mds), decorator,
+                v1RequestConverter, v1RequestConverter);
+        sb.annotatedService(API_V1_PATH_PREFIX,
+                new CredentialServiceV1(safePm, executor, mds), decorator,
+                v1RequestConverter, v1RequestConverter);
         sb.annotatedService()
-          .pathPrefix(API_V1_PATH_PREFIX)
-          .defaultServiceNaming(new ServiceNaming() {
-              private final String serviceName = ContentServiceV1.class.getName();
-              private final String watchServiceName =
-                      serviceName.replace("ContentServiceV1", "WatchContentServiceV1");
+                .pathPrefix(API_V1_PATH_PREFIX)
+                .defaultServiceNaming(new ServiceNaming() {
+                    private final String serviceName = ContentServiceV1.class.getName();
+                    private final String watchServiceName =
+                            serviceName.replace("ContentServiceV1", "WatchContentServiceV1");
 
-              @Override
-              public String serviceName(ServiceRequestContext ctx) {
-                  if (ctx.request().headers().contains(HttpHeaderNames.IF_NONE_MATCH)) {
+                    @Override
+                    public String serviceName(ServiceRequestContext ctx) {
+                        if (ctx.request().headers().contains(HttpHeaderNames.IF_NONE_MATCH)) {
                       return watchServiceName;
                   }
                   return serviceName;

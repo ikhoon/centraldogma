@@ -30,6 +30,8 @@ import { DeleteUserPermissionDto } from 'dogma/features/repo/permissions/DeleteU
 import { AddUserPermissionDto } from 'dogma/features/repo/permissions/AddUserPermissionDto';
 import { MirrorDto } from 'dogma/features/mirror/MirrorDto';
 import { BaseQueryResult } from '@reduxjs/toolkit/src/query/baseQueryTypes';
+import { index } from '@zxing/text-encoding/es2015/encoding/indexes';
+import { CredentialDto, NoneCredentialDto } from '../credential/CredentialDto';
 
 export type GetHistory = {
   projectName: string;
@@ -318,6 +320,10 @@ export const apiSlice = createApi({
       query: (projectName) => `/v1/projects/${projectName}/mirrors`,
       providesTags: ['Metadata'],
     }),
+    getMirror: builder.query<MirrorDto, { projectName: string; index: number }>({
+      query: ({ projectName, index }) => `/v1/projects/${projectName}/mirrors/${index}`,
+      providesTags: ['Metadata'],
+    }),
     addNewMirror: builder.mutation<any, MirrorDto>({
       query: (mirror) => ({
         url: `/v1/projects/${mirror.projectName}/mirrors`,
@@ -326,6 +332,44 @@ export const apiSlice = createApi({
           'Content-type': 'application/json; charset=UTF-8',
         },
         body: mirror,
+      }),
+    }),
+    updateMirror: builder.mutation<any, MirrorDto>({
+      query: (mirror) => ({
+        url: `/v1/projects/${mirror.projectName}/mirrors/${mirror.index}`,
+        method: 'PUT',
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+        body: mirror,
+      }),
+    }),
+    getCredentials: builder.query<CredentialDto[], string>({
+      query: (projectName) => `/v1/projects/${projectName}/credentials`,
+      providesTags: ['Metadata'],
+    }),
+    getCredential: builder.query<CredentialDto, { projectName: string; index: number }>({
+      query: ({ projectName, index }) => `/v1/projects/${projectName}/credentials/${index}`,
+      providesTags: ['Metadata'],
+    }),
+    addNewCredential: builder.mutation<any, { projectName: string; credential: CredentialDto }>({
+      query: ({ projectName, credential }) => ({
+        url: `/v1/projects/${projectName}/credentials`,
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+        body: credential,
+      }),
+    }),
+    updateCredential: builder.mutation<any, { projectName: string; credential: CredentialDto }>({
+      query: ({ projectName, credential }) => ({
+        url: `/v1/projects/${projectName}/credentials/${credential.index}`,
+        method: 'PUT',
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+        body: credential,
       }),
     }),
   }),
