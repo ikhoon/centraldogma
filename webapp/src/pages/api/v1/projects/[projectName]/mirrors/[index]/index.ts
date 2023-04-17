@@ -17,7 +17,7 @@
 import {NextApiRequest, NextApiResponse} from 'next';
 import {MirrorDto} from "dogma/features/mirror/MirrorDto";
 
-let mirrors: Map<number, MirrorDto> = new Map();
+const mirrors: Map<number, MirrorDto> = new Map();
 
 function newMirror(index: number, projectName: string): MirrorDto {
   return {

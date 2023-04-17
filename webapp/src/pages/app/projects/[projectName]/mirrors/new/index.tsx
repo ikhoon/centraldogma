@@ -46,7 +46,7 @@ const MIRROR_SCHEMES = ['git+http', 'git+https', 'git+ssh']
   .map((scheme) => ({value: scheme, label: scheme}));
 
 const LabelledIcon = ({icon, text}: { icon: IconType, text: string }) => (
-  <><Icon as={icon} boxSize={4} marginBottom="-3px"/> {text}</>
+  <><Icon as={icon} boxSize={4} marginBottom="-3px" /> {text}</>
 );
 
 const NewMirrorPage = () => {
@@ -60,7 +60,9 @@ const NewMirrorPage = () => {
     formState: {errors}, control,
   } = useForm<MirrorDto>();
 
+  // TODO(ikhoon): Handle error
   const {data: repos, error} = useGetReposQuery(projectName);
+
   const repoOptions: RepoOptionType[] = (repos || [])
     .map((repo) => ({
       value: repo.name,
@@ -117,7 +119,7 @@ const NewMirrorPage = () => {
           <Spacer />
 
           <FormControl isRequired>
-            <FormLabel><LabelledIcon icon={BiTimer} text='Schedule'/>
+            <FormLabel><LabelledIcon icon={BiTimer} text='Schedule' />
             </FormLabel>
             <Input
               id="schedule"
@@ -130,7 +132,7 @@ const NewMirrorPage = () => {
             <FormHelperText>
               <Link color='teal.500'
                     href="https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html"
-                    isExternal>Quartz cron expression <ExternalLinkIcon mx='2px'/> </Link>
+                    isExternal>Quartz cron expression <ExternalLinkIcon mx='2px' /> </Link>
               is used to describe when the mirroring task is supposed to be triggered.
             </FormHelperText>
             {errors.name && <FormErrorMessage>Please enter the mirror name</FormErrorMessage>}
@@ -138,7 +140,7 @@ const NewMirrorPage = () => {
           <Spacer />
 
           <FormControl isRequired>
-            <FormLabel><LabelledIcon icon={GoArrowBoth} text='Direction'/></FormLabel>
+            <FormLabel><LabelledIcon icon={GoArrowBoth} text='Direction' /></FormLabel>
             <Controller
               name="direction"
               rules={{required: true}}
@@ -147,10 +149,10 @@ const NewMirrorPage = () => {
                 <RadioGroup onChange={onChange} value={value} mb={4}>
                   <Stack direction="row">
                     <Radio value="REMOTE_TO_LOCAL" marginRight={2}>
-                      <LabelledIcon icon={GoArrowDown} text='Remote to Central Dogma'/>
+                      <LabelledIcon icon={GoArrowDown} text='Remote to Central Dogma' />
                     </Radio>
                     <Radio value="LOCAL_TO_REMOTE">
-                      <LabelledIcon icon={GoArrowUp} text='Central Dogma to Remote'/>
+                      <LabelledIcon icon={GoArrowUp} text='Central Dogma to Remote' />
                     </Radio>
                   </Stack>
                 </RadioGroup>
@@ -161,7 +163,7 @@ const NewMirrorPage = () => {
           {repoOptions.length >= 0 ? (
               <Stack direction='row' width='100%'>
                 <FormControl isRequired>
-                  <FormLabel><LabelledIcon icon={GoRepo} text={'Local repository'}/></FormLabel>
+                  <FormLabel><LabelledIcon icon={GoRepo} text={'Local repository'} /></FormLabel>
                   <Controller
                     control={control}
                     name="localRepo"
@@ -198,7 +200,7 @@ const NewMirrorPage = () => {
               </Stack>
             ) :
             <Alert status='error'>
-              <AlertIcon/>
+              <AlertIcon />
               <AlertTitle>No local repository is found.</AlertTitle>
               <AlertDescription>You need to create a local repository first.</AlertDescription>
             </Alert>
@@ -207,7 +209,7 @@ const NewMirrorPage = () => {
 
           <Stack direction='row' width='100%'>
             <FormControl isRequired width='50%'>
-              <FormLabel><LabelledIcon icon={GoRepo} text={'Remote repository'}/></FormLabel>
+              <FormLabel><LabelledIcon icon={GoRepo} text={'Remote repository'} /></FormLabel>
               <Controller
                 control={control}
                 name="localRepo"
@@ -253,11 +255,11 @@ const NewMirrorPage = () => {
               {errors.name && <FormErrorMessage>Please enter the mirror name</FormErrorMessage>}
             </FormControl>
           </Stack>
-          <Spacer/>
+          <Spacer />
 
           {/* TODO Get credential info from... */}
           <FormControl width='50%' alignItems='left'>
-            <FormLabel><LabelledIcon icon={GoKey} text={'Credential'}/></FormLabel>
+            <FormLabel><LabelledIcon icon={GoKey} text={'Credential'} /></FormLabel>
             <Controller
               control={control}
               name="credentialId"
@@ -280,10 +282,10 @@ const NewMirrorPage = () => {
               )}
             />
           </FormControl>
-          <Spacer/>
+          <Spacer />
 
           <FormControl>
-            <FormLabel><LabelledIcon icon={IoBanSharp} text={'gitignore'}/></FormLabel>
+            <FormLabel><LabelledIcon icon={IoBanSharp} text={'gitignore'} /></FormLabel>
             <Textarea
               id="gitignore"
               name="gitignore"
@@ -292,11 +294,11 @@ const NewMirrorPage = () => {
             />
             <FormHelperText>
               <Link color='teal.500' href='https://git-scm.com/docs/gitignore'
-                    isExternal>gitignore <ExternalLinkIcon mx='2px'/>
+                    isExternal>gitignore <ExternalLinkIcon mx='2px' />
               </Link> that should be excluded from mirroring.
             </FormHelperText>
           </FormControl>
-          <Spacer/>
+          <Spacer />
           <Button type="submit" colorScheme="blue" isLoading={isLoading} loadingText="Creating">
             Create a new mirror
           </Button>

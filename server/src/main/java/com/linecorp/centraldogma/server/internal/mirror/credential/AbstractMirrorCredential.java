@@ -16,6 +16,7 @@
 
 package com.linecorp.centraldogma.server.internal.mirror.credential;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.linecorp.centraldogma.internal.Util.requireNonNullElements;
 import static java.util.Objects.requireNonNull;
 
@@ -26,6 +27,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+
+import org.checkerframework.checker.units.qual.N;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.MoreObjects.ToStringHelper;
@@ -44,12 +47,14 @@ public abstract class AbstractMirrorCredential implements MirrorCredential {
     private final String id;
     private final Set<Pattern> hostnamePatterns;
     private final Set<String> hostnamePatternStrings;
+    private final boolean enabled;
 
-    AbstractMirrorCredential(@Nullable String id, @Nullable Iterable<Pattern> hostnamePatterns) {
+    AbstractMirrorCredential(@Nullable String id, @Nullable Iterable<Pattern> hostnamePatterns, @Nullable Boolean enabled) {
         this.id = id;
         this.hostnamePatterns = validateHostnamePatterns(hostnamePatterns);
         hostnamePatternStrings = this.hostnamePatterns.stream().map(Pattern::pattern)
                                                       .collect(Collectors.toSet());
+        this.enabled = firstNonNull(enabled, true);
     }
 
     private static Set<Pattern> validateHostnamePatterns(@Nullable Iterable<Pattern> hostnamePatterns) {
@@ -78,6 +83,11 @@ public abstract class AbstractMirrorCredential implements MirrorCredential {
     @Override
     public final Set<Pattern> hostnamePatterns() {
         return hostnamePatterns;
+    }
+
+    @Override
+    public final boolean enabled() {
+        return enabled;
     }
 
     @Override

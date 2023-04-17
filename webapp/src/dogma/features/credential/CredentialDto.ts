@@ -19,6 +19,7 @@ export interface CredentialDto {
   readonly id?: string;
   readonly type: string;
   readonly hostnamePatterns: string[];
+  readonly enabled: boolean;
 }
 
 export interface PasswordCredentialDto extends CredentialDto {

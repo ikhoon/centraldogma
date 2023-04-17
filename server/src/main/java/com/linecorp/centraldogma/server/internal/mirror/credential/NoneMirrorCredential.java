@@ -25,14 +25,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects.ToStringHelper;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
+
 public final class NoneMirrorCredential extends AbstractMirrorCredential {
 
     @JsonCreator
     public NoneMirrorCredential(@JsonProperty("id") @Nullable String id,
                                 @JsonProperty("hostnamePatterns") @Nullable
                                 @JsonDeserialize(contentAs = Pattern.class)
-                                Iterable<Pattern> hostnamePatterns) {
-        super(id, hostnamePatterns);
+                                Iterable<Pattern> hostnamePatterns,
+                                @JsonProperty("enabled") @Nullable Boolean enabled) {
+        super(id, hostnamePatterns, enabled);
     }
 
     @Override

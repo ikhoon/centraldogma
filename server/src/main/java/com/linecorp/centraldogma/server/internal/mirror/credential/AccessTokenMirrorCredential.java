@@ -16,6 +16,7 @@
 
 package com.linecorp.centraldogma.server.internal.mirror.credential;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.linecorp.centraldogma.server.internal.mirror.credential.MirrorCredentialUtil.requireNonEmpty;
 
 import java.util.regex.Pattern;
@@ -36,8 +37,9 @@ public final class AccessTokenMirrorCredential extends AbstractMirrorCredential 
                                        @JsonProperty("hostnamePatterns") @Nullable
                                        @JsonDeserialize(contentAs = Pattern.class)
                                        Iterable<Pattern> hostnamePatterns,
-                                       @JsonProperty("accessToken") String accessToken) {
-        super(id, hostnamePatterns);
+                                       @JsonProperty("accessToken") String accessToken,
+                                       @JsonProperty("enabled") @Nullable Boolean enabled) {
+        super(id, hostnamePatterns, enabled);
 
         this.accessToken = requireNonEmpty(accessToken, "accessToken");
     }

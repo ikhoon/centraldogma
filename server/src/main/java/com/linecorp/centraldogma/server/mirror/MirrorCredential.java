@@ -44,7 +44,7 @@ import com.linecorp.centraldogma.server.internal.mirror.credential.PublicKeyMirr
 })
 public interface MirrorCredential {
 
-    MirrorCredential FALLBACK = new NoneMirrorCredential(null, Collections.singleton(Pattern.compile("^.*$")));
+    MirrorCredential FALLBACK = new NoneMirrorCredential(null, Collections.singleton(Pattern.compile("^.*$")), true);
 
     /**
      * Returns the unique index of the credential.
@@ -62,6 +62,12 @@ public interface MirrorCredential {
      */
     @JsonProperty("hostnamePatterns")
     Set<Pattern> hostnamePatterns();
+
+    /**
+     * Returns whether this {@link MirrorCredential} is enabled.
+     */
+    @JsonProperty("enabled")
+    boolean enabled();
 
     /**
      * Returns {@code true} if the specified {@code uri} is matched by one of the host name patterns.

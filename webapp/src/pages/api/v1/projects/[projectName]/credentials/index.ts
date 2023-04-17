@@ -15,40 +15,69 @@
  */
 
 import {NextApiRequest, NextApiResponse} from 'next';
-import {MirrorDto} from "dogma/features/mirror/MirrorDto";
+import {
+  AccessTokenCredentialDto,
+  CredentialDto,
+  PasswordCredentialDto,
+  PublicKeyCredentialDto
+} from "dogma/features/credential/CredentialDto";
+import _ from "lodash";
 
-let mirrors: MirrorDto[] = [];
-for (let i = 0; i < 10; i++) {
-  mirrors.push({
-    index: i,
-    id: `mirror-${i}`,
-    projectName: `project-${i}`,
-    credentialId: `credential-${i}`,
-    direction: 'REMOTE_TO_LOCAL',
-    enabled: true,
-    gitignore: `ignore${i}`,
-    localPath: `/local/path/${i}`,
-    localRepo: `local-repo-${i}`,
-    remotePath: `/remote/path/${i}`,
-    remoteScheme: 'git+https',
-    remoteUrl: 'github.com:line/centraldogma',
-    schedule: `${i} * * * * ?`,
-  });
+const credentials: CredentialDto[] =
+  _.range(0, 20).map((i) => newRandomCredential(i));
+
+export function newRandomCredential(index: number): CredentialDto {
+  switch (index % 4) {
+    case 0:
+      return {
+        index: index,
+        id: `password-id-${index}`,
+        type: 'password',
+        hostnamePatterns: [`hostname-${index}.com`],
+        username: `username-${index}`,
+        password: `password-${index}`,
+        enabled: true
+      } as PasswordCredentialDto;
+    case 1:
+      return {
+        index: index,
+        id: `public-key-id-${index}`,
+        type: 'public_key',
+        hostnamePatterns: [`hostname-${index}.com`],
+        username: `username-${index}`,
+        publicKey: `public-key-${index}`,
+        privateKey: `private-key-${index}`,
+        passphrase: `passphrase-${index}`,
+        enabled: true
+      } as PublicKeyCredentialDto
+    case 2:
+      return {
+        index: index,
+        id: `access-token-id-${index}`,
+        type: 'access_token',
+        hostnamePatterns: [`hostname-${index}.com`],
+        accessToken: `access-token-${index}`,
+        enabled: true
+      } as AccessTokenCredentialDto
+    case 3:
+      return {
+        index: index,
+        id: `none-id-${index}`,
+        type: 'none',
+        hostnamePatterns: [`hostname-${index}.com`],
+        enabled: true
+      }
+  }
 }
 
-let revision = mirrors.length + 2;
+let revision = credentials.length + 2;
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
     case 'GET':
-      const projectName = req.query.projectName as string;
-      mirrors = mirrors.map(mirror => {
-        mirror.projectName = projectName
-        return mirror;
-      });
-      res.status(200).json(mirrors);
+      res.status(200).json(credentials);
       break;
     case 'POST':
-      mirrors.push(req.body);
+      credentials.push(req.body);
       res.status(201).json(`${++revision}`);
       break;
     default:

@@ -1,28 +1,29 @@
-import { Box, Button, Flex, Heading, Spacer, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react';
-import { NewRepo } from 'dogma/features/repo/NewRepo';
-import { Breadcrumbs } from 'dogma/common/components/Breadcrumbs';
-import { useGetMetadataByProjectNameQuery } from 'dogma/features/api/apiSlice';
+import {Box, Button, Flex, Heading, Spacer, Tab, TabList, TabPanel, TabPanels, Tabs} from '@chakra-ui/react';
+import {NewRepo} from 'dogma/features/repo/NewRepo';
+import {Breadcrumbs} from 'dogma/common/components/Breadcrumbs';
+import {useGetMetadataByProjectNameQuery} from 'dogma/features/api/apiSlice';
 import AppMemberList from 'dogma/features/metadata/AppMemberList';
 import RepoPermissionList from 'dogma/features/repo/RepoPermissionList';
 import AppTokenList from 'dogma/features/metadata/AppTokenList';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import {useRouter} from 'next/router';
+import {useEffect, useState} from 'react';
 import RepoMetaList from 'dogma/features/metadata/RepoMetaList';
-import { DeleteProject } from 'dogma/features/project/DeleteProject';
-import { NewMember } from 'dogma/features/metadata/NewMember';
-import { NewAppToken } from 'dogma/features/metadata/NewAppToken';
-import { useAppSelector } from 'dogma/store';
-import { Deferred } from 'dogma/common/components/Deferred';
+import {DeleteProject} from 'dogma/features/project/DeleteProject';
+import {NewMember} from 'dogma/features/metadata/NewMember';
+import {NewAppToken} from 'dogma/features/metadata/NewAppToken';
+import {useAppSelector} from 'dogma/store';
+import {Deferred} from 'dogma/common/components/Deferred';
 import MirrorList from "dogma/features/mirror/MirrorList";
-import { AiOutlinePlus } from "react-icons/ai";
+import {AiOutlinePlus} from "react-icons/ai";
+import CredentialList from "dogma/features/credential/CredentialList";
 
 // TODO(ikhoon): Move this page to /app/projects/[projectName]/metadata
 
 let tabs = ['repositories', 'permissions', 'members', 'tokens', 'mirror'];
 
 const ProjectMetadataPage = () => {
-  const { user } = useAppSelector((state) => state.auth);
+  const {user} = useAppSelector((state) => state.auth);
   if (!user) {
     tabs = ['repositories', 'mirror'];
   }
@@ -51,7 +52,7 @@ const ProjectMetadataPage = () => {
           <Breadcrumbs
             path={router.asPath.split('?')[0]}
             omitIndexList={[0, 2]}
-            suffixes={{ 4: '/list/head' }}
+            suffixes={{4: '/list/head'}}
           />
           <Flex minWidth="max-content" alignItems="center" gap="2" mb={6}>
             <Heading size="lg">Project {projectName} - Metadata</Heading>
@@ -63,7 +64,7 @@ const ProjectMetadataPage = () => {
                   as={Link}
                   key={tabName}
                   replace
-                  href={{ pathname: `/app/projects/metadata/${projectName}`, query: { tab: tabName } }}
+                  href={{pathname: `/app/projects/metadata/${projectName}`, query: {tab: tabName}}}
                 >
                   <Heading size="sm">
                     {tabName.charAt(0).toUpperCase()}
@@ -75,9 +76,9 @@ const ProjectMetadataPage = () => {
             <TabPanels>
               <TabPanel>
                 <Flex gap={3}>
-                  <Spacer />
-                  <DeleteProject projectName={projectName} />
-                  <NewRepo projectName={projectName} />
+                  <Spacer/>
+                  <DeleteProject projectName={projectName}/>
+                  <NewRepo projectName={projectName}/>
                 </Flex>
                 <RepoMetaList
                   data={metadata ? Array.from(Object.values(metadata.repos)) : []}
@@ -98,8 +99,8 @@ const ProjectMetadataPage = () => {
               {user && (
                 <TabPanel>
                   <Flex>
-                    <Spacer />
-                    <NewMember projectName={projectName} />
+                    <Spacer/>
+                    <NewMember projectName={projectName}/>
                   </Flex>
                   <AppMemberList
                     data={metadata ? Array.from(Object.values(metadata.members)) : []}
@@ -110,8 +111,8 @@ const ProjectMetadataPage = () => {
               {user && (
                 <TabPanel>
                   <Flex>
-                    <Spacer />
-                    <NewAppToken projectName={projectName} />
+                    <Spacer/>
+                    <NewAppToken projectName={projectName}/>
                   </Flex>
                   <AppTokenList
                     data={metadata ? Array.from(Object.values(metadata.tokens)) : []}
@@ -121,19 +122,36 @@ const ProjectMetadataPage = () => {
               )}
               <TabPanel>
                 <Flex>
-                  <Spacer />
+                  <Spacer/>
                   <Button
                     as={Link}
                     href={`/app/projects/${projectName}/mirrors/new`}
                     size="sm"
-                    rightIcon={<AiOutlinePlus />}
+                    rightIcon={<AiOutlinePlus/>}
                     colorScheme="teal"
                   >
                     New Mirror
                   </Button>
                 </Flex>
-                <MirrorList projectName={projectName} />
+                <MirrorList projectName={projectName}/>
               </TabPanel>
+              {user?.roles.includes('LEVEL_ADMIN') && (
+                <TabPanel>
+                  <Flex>
+                    <Spacer/>
+                    <Button
+                      as={Link}
+                      href={`/app/projects/${projectName}/credentials/new`}
+                      size="sm"
+                      rightIcon={<AiOutlinePlus/>}
+                      colorScheme="teal"
+                    >
+                      New Credential
+                    </Button>
+                  </Flex>
+                  <CredentialList projectName={projectName}/>
+                </TabPanel>
+              )}
             </TabPanels>
           </Tabs>
         </Box>

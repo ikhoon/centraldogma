@@ -16,6 +16,7 @@
 
 package com.linecorp.centraldogma.server.internal.mirror.credential;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.linecorp.centraldogma.server.internal.mirror.credential.MirrorCredentialUtil.requireNonEmpty;
 import static java.util.Objects.requireNonNull;
 
@@ -39,8 +40,9 @@ public final class PasswordMirrorCredential extends AbstractMirrorCredential {
                                     @JsonDeserialize(contentAs = Pattern.class)
                                     Iterable<Pattern> hostnamePatterns,
                                     @JsonProperty("username") String username,
-                                    @JsonProperty("password") String password) {
-        super(id, hostnamePatterns);
+                                    @JsonProperty("password") String password,
+                                    @JsonProperty("enabled") @Nullable Boolean enabled) {
+        super(id, hostnamePatterns, enabled);
 
         this.username = requireNonEmpty(username, "username");
         this.password = requireNonNull(password, "password");

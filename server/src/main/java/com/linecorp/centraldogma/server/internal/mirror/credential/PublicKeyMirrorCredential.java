@@ -16,6 +16,7 @@
 
 package com.linecorp.centraldogma.server.internal.mirror.credential;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.linecorp.centraldogma.server.internal.mirror.credential.MirrorCredentialUtil.decodeBase64OrUtf8;
 import static com.linecorp.centraldogma.server.internal.mirror.credential.MirrorCredentialUtil.requireNonEmpty;
 
@@ -52,9 +53,10 @@ public final class PublicKeyMirrorCredential extends AbstractMirrorCredential {
                                      @JsonProperty("username") String username,
                                      @JsonProperty("publicKey") String publicKey,
                                      @JsonProperty("privateKey") String privateKey,
-                                     @JsonProperty("passphrase") @Nullable String passphrase) {
+                                     @JsonProperty("passphrase") @Nullable String passphrase,
+                                     @JsonProperty("enabled") @Nullable Boolean enabled) {
 
-        super(id, hostnamePatterns);
+        super(id, hostnamePatterns, enabled);
 
         this.username = requireNonEmpty(username, "username");
 
