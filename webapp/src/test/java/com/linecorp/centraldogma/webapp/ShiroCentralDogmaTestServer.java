@@ -53,6 +53,7 @@ final class ShiroCentralDogmaTestServer {
                 // Enable the legacy webapp
                 // .webAppEnabled(true)
                 .port(PORT, SessionProtocol.HTTP)
+                .administrators("foo")
                 .authProviderFactory(new ShiroAuthProviderFactory(unused -> {
                     final Ini iniConfig = new Ini();
                     iniConfig.addSection("users").put(USERNAME, PASSWORD);

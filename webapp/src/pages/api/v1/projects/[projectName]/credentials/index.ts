@@ -14,17 +14,11 @@
  * under the License.
  */
 
-import {NextApiRequest, NextApiResponse} from 'next';
-import {
-  AccessTokenCredentialDto,
-  CredentialDto,
-  PasswordCredentialDto,
-  PublicKeyCredentialDto
-} from "dogma/features/credential/CredentialDto";
-import _ from "lodash";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { CredentialDto } from 'dogma/features/credential/CredentialDto';
+import _ from 'lodash';
 
-const credentials: CredentialDto[] =
-  _.range(0, 20).map((i) => newRandomCredential(i));
+const credentials: CredentialDto[] = _.range(0, 20).map((i) => newRandomCredential(i));
 
 export function newRandomCredential(index: number): CredentialDto {
   switch (index % 4) {
@@ -36,8 +30,8 @@ export function newRandomCredential(index: number): CredentialDto {
         hostnamePatterns: [`hostname-${index}.com`],
         username: `username-${index}`,
         password: `password-${index}`,
-        enabled: true
-      } as PasswordCredentialDto;
+        enabled: true,
+      };
     case 1:
       return {
         index: index,
@@ -48,8 +42,8 @@ export function newRandomCredential(index: number): CredentialDto {
         publicKey: `public-key-${index}`,
         privateKey: `private-key-${index}`,
         passphrase: `passphrase-${index}`,
-        enabled: true
-      } as PublicKeyCredentialDto
+        enabled: true,
+      };
     case 2:
       return {
         index: index,
@@ -57,16 +51,16 @@ export function newRandomCredential(index: number): CredentialDto {
         type: 'access_token',
         hostnamePatterns: [`hostname-${index}.com`],
         accessToken: `access-token-${index}`,
-        enabled: true
-      } as AccessTokenCredentialDto
+        enabled: true,
+      };
     case 3:
       return {
         index: index,
         id: `none-id-${index}`,
         type: 'none',
         hostnamePatterns: [`hostname-${index}.com`],
-        enabled: true
-      }
+        enabled: true,
+      };
   }
 }
 

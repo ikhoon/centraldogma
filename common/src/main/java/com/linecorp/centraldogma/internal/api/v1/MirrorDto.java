@@ -1,5 +1,6 @@
 package com.linecorp.centraldogma.internal.api.v1;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
@@ -54,7 +55,7 @@ public final class MirrorDto {
                      @JsonProperty("remoteBranch") String remoteBranch,
                      @JsonProperty("gitignore") @Nullable String gitignore,
                      @JsonProperty("credentialId") @Nullable String credentialId,
-                     @JsonProperty("enabled") boolean enabled) {
+                     @JsonProperty("enabled") @Nullable Boolean enabled) {
         this.index = index;
         this.id = id;
         this.projectName = requireNonNull(projectName, "projectName");
@@ -68,7 +69,7 @@ public final class MirrorDto {
         this.remoteBranch = requireNonNull(remoteBranch, "remoteBranch");
         this.gitignore = gitignore;
         this.credentialId = credentialId;
-        this.enabled = enabled;
+        this.enabled = firstNonNull(enabled, true);
     }
 
     @JsonProperty("index")

@@ -16,20 +16,17 @@
 
 package com.linecorp.centraldogma.server.internal.mirror.credential;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
-import static com.linecorp.centraldogma.server.internal.mirror.credential.MirrorCredentialUtil.requireNonEmpty;
-
-import java.util.regex.Pattern;
-
-import javax.annotation.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects.ToStringHelper;
 
-public final class AccessTokenMirrorCredential extends AbstractMirrorCredential {
+import javax.annotation.Nullable;
+import java.util.regex.Pattern;
 
+import static com.linecorp.centraldogma.server.internal.mirror.credential.MirrorCredentialUtil.requireNonEmpty;
+
+public final class AccessTokenMirrorCredential extends AbstractMirrorCredential {
     private final String accessToken;
 
     @JsonCreator
@@ -39,7 +36,7 @@ public final class AccessTokenMirrorCredential extends AbstractMirrorCredential 
                                        Iterable<Pattern> hostnamePatterns,
                                        @JsonProperty("accessToken") String accessToken,
                                        @JsonProperty("enabled") @Nullable Boolean enabled) {
-        super(id, hostnamePatterns, enabled);
+        super(id, "access_token", hostnamePatterns, enabled);
 
         this.accessToken = requireNonEmpty(accessToken, "accessToken");
     }

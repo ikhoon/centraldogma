@@ -14,8 +14,8 @@
  * under the License.
  */
 
-import {NextApiRequest, NextApiResponse} from 'next';
-import {MirrorDto} from "dogma/features/mirror/MirrorDto";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { MirrorDto } from 'dogma/features/mirror/MirrorDto';
 
 let mirrors: MirrorDto[] = [];
 for (let i = 0; i < 10; i++) {
@@ -31,6 +31,7 @@ for (let i = 0; i < 10; i++) {
     localRepo: `local-repo-${i}`,
     remotePath: `/remote/path/${i}`,
     remoteScheme: 'git+https',
+    remoteBranch: 'master',
     remoteUrl: 'github.com:line/centraldogma',
     schedule: `${i} * * * * ?`,
   });
@@ -41,8 +42,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {
     case 'GET':
       const projectName = req.query.projectName as string;
-      mirrors = mirrors.map(mirror => {
-        mirror.projectName = projectName
+      mirrors = mirrors.map((mirror) => {
+        mirror.projectName = projectName;
         return mirror;
       });
       res.status(200).json(mirrors);

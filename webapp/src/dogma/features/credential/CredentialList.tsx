@@ -1,29 +1,49 @@
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import React, { useMemo } from 'react';
-import { MirrorDto } from 'dogma/features/mirror/MirrorDto';
 import { DataTableClientPagination } from 'dogma/common/components/table/DataTableClientPagination';
 import { useGetCredentialsQuery } from 'dogma/features/api/apiSlice';
-import {CredentialDto} from "dogma/features/credential/CredentialDto";
+import { CredentialDto } from 'dogma/features/credential/CredentialDto';
+import { Badge, Code } from '@chakra-ui/react';
+import { ChakraLink } from 'dogma/common/components/ChakraLink';
 
 export type CredentialListProps<Data extends object> = {
   projectName: string;
 };
 
 const CredentialList = <Data extends object>({ projectName }: CredentialListProps<Data>) => {
-  const { data, error } = useGetCredentialsQuery(projectName);
+  const { data } = useGetCredentialsQuery(projectName);
   const columnHelper = createColumnHelper<CredentialDto>();
   const columns = useMemo(
     () => [
-      columnHelper.accessor((row: CredentialDto) => row.type, {
-        cell: (info) => info.getValue(),
-        header: 'Type',
-      }),
       columnHelper.accessor((row: CredentialDto) => row.id, {
-        cell: (info) => info.getValue() || '-',
+        cell: (info) => {
+          const id = info.getValue() || 'undefined';
+          return (
+            <ChakraLink
+              href={`/app/projects/${projectName}/credentials/${info.row.original.index}`}
+              fontWeight="semibold"
+            >
+              {id}
+            </ChakraLink>
+          );
+        },
         header: 'ID',
       }),
+      columnHelper.accessor((row: CredentialDto) => row.type, {
+        cell: (info) => {
+          return <Badge colorScheme="green">{info.getValue()}</Badge>;
+        },
+        header: 'Authentication Type',
+      }),
       columnHelper.accessor((row: CredentialDto) => row.hostnamePatterns, {
-        cell: (info) => info.getValue().join(', '),
+        cell: (info) => {
+          const hostnamePatterns = info.getValue();
+          if (hostnamePatterns.length == 0) {
+            return '-';
+          } else {
+            return <Code>{hostnamePatterns.join(', ')}</Code>;
+          }
+        },
         header: 'Hostnames',
       }),
       columnHelper.accessor((row: CredentialDto) => row.enabled, {
@@ -39,7 +59,7 @@ const CredentialList = <Data extends object>({ projectName }: CredentialListProp
     ],
     [columnHelper, projectName],
   );
-  return <DataTableClientPagination columns={columns as ColumnDef<MirrorDto>[]} data={data || []} />;
+  return <DataTableClientPagination columns={columns as ColumnDef<CredentialDto>[]} data={data || []} />;
 };
 
 export default CredentialList;

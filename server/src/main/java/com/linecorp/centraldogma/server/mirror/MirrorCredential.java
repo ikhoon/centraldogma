@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -35,13 +36,14 @@ import com.linecorp.centraldogma.server.internal.mirror.credential.PublicKeyMirr
 /**
  * The authentication credentials which are required when accessing the Git repositories.
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
 @JsonSubTypes({
         @Type(value = NoneMirrorCredential.class, name = "none"),
         @Type(value = PasswordMirrorCredential.class, name = "password"),
         @Type(value = PublicKeyMirrorCredential.class, name = "public_key"),
         @Type(value = AccessTokenMirrorCredential.class, name = "access_token")
 })
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public interface MirrorCredential {
 
     MirrorCredential FALLBACK = new NoneMirrorCredential(null, Collections.singleton(Pattern.compile("^.*$")), true);
@@ -49,6 +51,7 @@ public interface MirrorCredential {
     /**
      * Returns the unique index of the credential.
      */
+    @JsonProperty("index")
     int index();
 
     /**

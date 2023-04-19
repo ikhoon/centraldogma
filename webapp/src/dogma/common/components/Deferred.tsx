@@ -34,6 +34,7 @@ export const Deferred = (props: LoadingProps) => {
     );
   }
   if (props.error) {
+    console.log('error', props.error);
     return (
       <Error
         statusCode={(props.error as FetchBaseQueryError).status as number}

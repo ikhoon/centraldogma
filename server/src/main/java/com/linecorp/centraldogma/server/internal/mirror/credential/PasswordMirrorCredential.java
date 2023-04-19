@@ -42,7 +42,7 @@ public final class PasswordMirrorCredential extends AbstractMirrorCredential {
                                     @JsonProperty("username") String username,
                                     @JsonProperty("password") String password,
                                     @JsonProperty("enabled") @Nullable Boolean enabled) {
-        super(id, hostnamePatterns, enabled);
+        super(id, "password", hostnamePatterns, enabled);
 
         this.username = requireNonEmpty(username, "username");
         this.password = requireNonNull(password, "password");

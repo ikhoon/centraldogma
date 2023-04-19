@@ -16,12 +16,10 @@ import { NewRepoTokenPermission } from 'dogma/features/repo/permissions/NewRepoT
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-// TODO(ikhoon): Move this page to /app/projects/[projectName]/metadata/repo/[repoName]
-
 let tabs = ['role', 'user', 'token'];
 import { Deferred } from 'dogma/common/components/Deferred';
 
-const RepoMetadata = () => {
+const RepoMetadataPage = () => {
   const router = useRouter();
   const projectName = router.query.projectName ? (router.query.projectName as string) : '';
   const repoName = router.query.repoName ? (router.query.repoName as string) : '';
@@ -42,12 +40,14 @@ const RepoMetadata = () => {
   const [deleteTokenPermission, { isLoading: isDeleteTokenLoading }] = useDeleteTokenPermissionMutation();
   const [tabIndex, setTabIndex] = useState(0);
   const tab = router.query.tab ? (router.query.tab as string) : '';
+
   useEffect(() => {
     const index = tabs.findIndex((tabName) => tabName === tab);
     if (index !== -1 && index !== tabIndex) {
       setTabIndex(index);
     }
   }, [tab, tabIndex]);
+
   return (
     <Deferred isLoading={isLoading} error={error}>
       {() => (
@@ -64,7 +64,7 @@ const RepoMetadata = () => {
                   key={tabName}
                   replace
                   href={{
-                    pathname: `/app/projects/metadata/${projectName}/${repoName}`,
+                    pathname: `/app/projects/${projectName}/permissions/repos/${repoName}`,
                     query: { tab: tabName },
                   }}
                 >
@@ -143,4 +143,4 @@ const RepoMetadata = () => {
   );
 };
 
-export default RepoMetadata;
+export default RepoMetadataPage;

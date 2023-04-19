@@ -35,7 +35,7 @@ public final class NoneMirrorCredential extends AbstractMirrorCredential {
                                 @JsonDeserialize(contentAs = Pattern.class)
                                 Iterable<Pattern> hostnamePatterns,
                                 @JsonProperty("enabled") @Nullable Boolean enabled) {
-        super(id, hostnamePatterns, enabled);
+        super(id, "none", hostnamePatterns, enabled);
     }
 
     @Override

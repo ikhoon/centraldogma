@@ -8,6 +8,7 @@ export interface MirrorDto {
   localPath: string;
   remoteScheme: string;
   remoteUrl: string;
+  remoteBranch: string;
   remotePath: string;
   gitignore?: string;
   credentialId?: string;

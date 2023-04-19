@@ -56,7 +56,7 @@ public final class PublicKeyMirrorCredential extends AbstractMirrorCredential {
                                      @JsonProperty("passphrase") @Nullable String passphrase,
                                      @JsonProperty("enabled") @Nullable Boolean enabled) {
 
-        super(id, hostnamePatterns, enabled);
+        super(id, "public_key", hostnamePatterns, enabled);
 
         this.username = requireNonEmpty(username, "username");
 

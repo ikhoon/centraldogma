@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Iterables;
 import org.checkerframework.checker.units.qual.N;
 
 import com.google.common.base.MoreObjects;
@@ -45,20 +47,29 @@ public abstract class AbstractMirrorCredential implements MirrorCredential {
 
     @Nullable
     private final String id;
+    private final String type;
     private final Set<Pattern> hostnamePatterns;
     private final Set<String> hostnamePatternStrings;
     private final boolean enabled;
 
-    AbstractMirrorCredential(@Nullable String id, @Nullable Iterable<Pattern> hostnamePatterns, @Nullable Boolean enabled) {
+    AbstractMirrorCredential(@Nullable String id, String type, @Nullable Iterable<Pattern> hostnamePatterns, @Nullable Boolean enabled) {
         this.id = id;
+        // JsonTypeInfo is ignored when serializing collections.
+        // As a workaround, manually set the type hint to serialize.
+        this.type = requireNonNull(type, "type");
         this.hostnamePatterns = validateHostnamePatterns(hostnamePatterns);
         hostnamePatternStrings = this.hostnamePatterns.stream().map(Pattern::pattern)
-                                                      .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
         this.enabled = firstNonNull(enabled, true);
     }
 
     private static Set<Pattern> validateHostnamePatterns(@Nullable Iterable<Pattern> hostnamePatterns) {
-        if (hostnamePatterns == null) {
+        if (hostnamePatterns == null || Iterables.isEmpty(hostnamePatterns)) {
+            return ImmutableSet.of();
+        }
+        final Pattern pattern = Iterables.getFirst(hostnamePatterns, null);
+        if (pattern == null) {
+            // Web browsers may send an empty array as a value of hostnamePatterns which is converted into `[null]`.
             return ImmutableSet.of();
         }
 
@@ -78,6 +89,11 @@ public abstract class AbstractMirrorCredential implements MirrorCredential {
     @Override
     public final Optional<String> id() {
         return Optional.ofNullable(id);
+    }
+
+    @JsonProperty("type")
+    public final String type() {
+        return type;
     }
 
     @Override

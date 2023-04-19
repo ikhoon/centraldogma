@@ -16,24 +16,24 @@
 
 export interface CredentialDto {
   readonly index: number;
-  readonly id?: string;
-  readonly type: string;
-  readonly hostnamePatterns: string[];
-  readonly enabled: boolean;
-}
+  id?: string;
+  type: 'password' | 'public_key' | 'access_token' | 'none';
+  hostnamePatterns: string[];
+  enabled: boolean;
 
-export interface PasswordCredentialDto extends CredentialDto {
-  readonly username: string;
-  readonly password: string;
-}
+  // Password-based credential
+  // - All fields are required.
+  username?: string;
+  password?: string;
 
-export interface PublicKeyCredentialDto extends CredentialDto {
-  readonly username: string;
-  readonly publicKey: string;
-  readonly privateKey: string;
-  readonly passphrase?: string;
-}
+  // Public key-based credential.
+  // - username is included in this credential.
+  // - passphrase is optional and other fields are required.
+  publicKey?: string;
+  privateKey?: string;
+  passphrase?: string;
 
-export interface AccessTokenCredentialDto extends CredentialDto {
-  readonly accessToken: string;
+  // Access token-based credential
+  // - access token is required.
+  accessToken?: string;
 }

@@ -14,8 +14,8 @@
  * under the License.
  */
 
-import {NextApiRequest, NextApiResponse} from 'next';
-import {MirrorDto} from "dogma/features/mirror/MirrorDto";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { MirrorDto } from 'dogma/features/mirror/MirrorDto';
 
 const mirrors: Map<number, MirrorDto> = new Map();
 
@@ -32,6 +32,7 @@ function newMirror(index: number, projectName: string): MirrorDto {
     localRepo: `local-repo-${index}`,
     remotePath: `/remote/path/${index}`,
     remoteScheme: 'git+https',
+    remoteBranch: 'master',
     remoteUrl: 'github.com:line/centraldogma',
     schedule: `${index} * * * * ?`,
   };
