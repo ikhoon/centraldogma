@@ -31,6 +31,7 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           title: Update Armeria version to ${{ inputs.armeria_version }}
+          body : ''
           commit-message: Update Armeria version to ${{ inputs.armeria_version }}
           author: Meri Kim <dl_armeria@linecorp.com>
           branch: update-armeria-version
