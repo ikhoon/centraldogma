@@ -12,6 +12,8 @@ jobs:
   update-armeria-version:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+
       - name: Update Armeria version to the latest one
         run: |
           sed -i "s/armeria = \".*\"/armeria = \"${{ inputs.armeria_version }}\"/" dependencies.toml
