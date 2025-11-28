@@ -758,12 +758,7 @@ class GitRepository implements Repository {
         requireNonNull(changes, "changes");
         final CommitExecutor commitExecutor =
                 new CommitExecutor(this, commitTimeMillis, author, summary, detail, markup, false);
-        return commit(baseRevision, commitExecutor, normBaseRevision -> {
-            if (!directExecution) {
-                return changes;
-            }
-            return blockingPreviewDiff(normBaseRevision, new DefaultChangesApplier(changes)).values();
-        });
+        return commit(baseRevision, commitExecutor, normBaseRevision -> changes);
     }
 
     @Override

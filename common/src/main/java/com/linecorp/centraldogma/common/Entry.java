@@ -177,6 +177,10 @@ public final class Entry<T> implements ContentHolder<T> {
         return content;
     }
 
+    public String rawContent() {
+
+    }
+
     @Override
     public String contentAsText() {
         if (contentAsText == null) {

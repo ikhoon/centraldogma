@@ -52,7 +52,7 @@ import difflib.Patch;
 /**
  * A modification of an individual {@link Entry}.
  */
-@JsonDeserialize(as = DefaultChange.class)
+@JsonDeserialize(using= ChangeDeserializer.class)
 public interface Change<T> {
 
     /**
@@ -73,7 +73,7 @@ public interface Change<T> {
             throw new ChangeFormatException("invalid file type: " + path +
                                             " (expected: a non-JSON file). Use Change.ofJsonUpsert() instead");
         }
-        return new DefaultChange<>(path, ChangeType.UPSERT_TEXT, text);
+        return new TextChange(path, ChangeType.UPSERT_TEXT, text);
     }
 
     /**
@@ -86,15 +86,7 @@ public interface Change<T> {
      */
     static Change<JsonNode> ofJsonUpsert(String path, String jsonText) {
         requireNonNull(jsonText, "jsonText");
-
-        final JsonNode jsonNode;
-        try {
-            jsonNode = Jackson.readTree(jsonText);
-        } catch (IOException e) {
-            throw new ChangeFormatException("failed to read a value as a JSON tree", e);
-        }
-
-        return new DefaultChange<>(path, ChangeType.UPSERT_JSON, jsonNode);
+        return new JsonChange(path, ChangeType.UPSERT_JSON, jsonText);
     }
 
     /**
@@ -105,7 +97,7 @@ public interface Change<T> {
      */
     static Change<JsonNode> ofJsonUpsert(String path, JsonNode jsonNode) {
         requireNonNull(jsonNode, "jsonNode");
-        return new DefaultChange<>(path, ChangeType.UPSERT_JSON, jsonNode);
+        return new JsonChange(path, ChangeType.UPSERT_JSON, jsonNode);
     }
 
     /**
@@ -114,7 +106,7 @@ public interface Change<T> {
      * @param path the path of the file to remove
      */
     static Change<Void> ofRemoval(String path) {
-        return new DefaultChange<>(path, ChangeType.REMOVE, null);
+        return new NoContentChange(path, ChangeType.REMOVE);
     }
 
     /**
@@ -126,7 +118,7 @@ public interface Change<T> {
     static Change<String> ofRename(String oldPath, String newPath) {
         validateFilePath(oldPath, "oldPath");
         validateFilePath(newPath, "newPath");
-        return new DefaultChange<>(oldPath, ChangeType.RENAME, newPath);
+        return new TextChange(oldPath, ChangeType.RENAME, newPath);
     }
 
     /**
@@ -156,7 +148,7 @@ public interface Change<T> {
         final Patch<String> patch = DiffUtils.diff(oldLineList, newLineList);
         final List<String> unifiedDiff = DiffUtils.generateUnifiedDiff(path, path, oldLineList, patch, 3);
 
-        return new DefaultChange<>(path, ChangeType.APPLY_TEXT_PATCH, String.join("\n", unifiedDiff));
+        return new TextChange(path, ChangeType.APPLY_TEXT_PATCH, String.join("\n", unifiedDiff));
     }
 
     /**
@@ -179,7 +171,7 @@ public interface Change<T> {
                                             " (expected: a non-JSON file). Use Change.ofJsonPatch() instead");
         }
 
-        return new DefaultChange<>(path, ChangeType.APPLY_TEXT_PATCH, textPatch);
+        return new TextChange(path, ChangeType.APPLY_TEXT_PATCH, textPatch);
     }
 
     /**
@@ -205,8 +197,8 @@ public interface Change<T> {
             throw new ChangeFormatException("failed to read a value as a JSON tree", e);
         }
 
-        return new DefaultChange<>(path, ChangeType.APPLY_JSON_PATCH,
-                                   JsonPatch.generate(oldJsonNode, newJsonNode, ReplaceMode.SAFE).toJson());
+        return new JsonChange(path, ChangeType.APPLY_JSON_PATCH,
+                              JsonPatch.generate(oldJsonNode, newJsonNode, ReplaceMode.SAFE).toJson());
     }
 
     /**
@@ -223,8 +215,8 @@ public interface Change<T> {
             oldJsonNode = Jackson.nullNode;
         }
 
-        return new DefaultChange<>(path, ChangeType.APPLY_JSON_PATCH,
-                                   JsonPatch.generate(oldJsonNode, newJsonNode, ReplaceMode.SAFE).toJson());
+        return new JsonChange(path, ChangeType.APPLY_JSON_PATCH,
+                              JsonPatch.generate(oldJsonNode, newJsonNode, ReplaceMode.SAFE).toJson());
     }
 
     /**
@@ -236,7 +228,7 @@ public interface Change<T> {
     static Change<JsonNode> ofJsonPatch(String path, JsonPatchOperation jsonPatch) {
         requireNonNull(path, "path");
         requireNonNull(jsonPatch, "jsonPatch");
-        return new DefaultChange<>(path, ChangeType.APPLY_JSON_PATCH, jsonPatch.toJsonNode());
+        return new JsonChange(path, ChangeType.APPLY_JSON_PATCH, jsonPatch.toJsonNode());
     }
 
     /**
@@ -260,8 +252,8 @@ public interface Change<T> {
         requireNonNull(path, "path");
         requireNonNull(jsonPatches, "jsonPatches");
         checkArgument(!Iterables.isEmpty(jsonPatches), "jsonPatches cannot be empty");
-        return new DefaultChange<>(path, ChangeType.APPLY_JSON_PATCH,
-                                   JsonPatchOperation.asJsonArray(jsonPatches));
+        return new JsonChange(path, ChangeType.APPLY_JSON_PATCH,
+                              JsonPatchOperation.asJsonArray(jsonPatches));
     }
 
     /**
@@ -294,7 +286,7 @@ public interface Change<T> {
     static Change<JsonNode> ofJsonPatch(String path, JsonNode jsonPatchNode) {
         requireNonNull(jsonPatchNode, "jsonPatchNode");
 
-        return new DefaultChange<>(path, ChangeType.APPLY_JSON_PATCH, jsonPatchNode);
+        return new JsonChange(path, ChangeType.APPLY_JSON_PATCH, jsonPatchNode);
     }
 
     /**
@@ -389,6 +381,13 @@ public interface Change<T> {
     @Nullable
     @JsonProperty
     T content();
+
+    /**
+     * Returns the raw content of the {@link Change} as-is without any transformation.
+     * If a {@link JsonNode} was set as the content, raw content will be {@code null}.
+     */
+    @Nullable
+    String rawContent();
 
     /**
      * Returns the textual representation of {@link #content()}.
