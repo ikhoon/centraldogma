@@ -407,8 +407,7 @@ class GitRepository implements Repository {
                     final byte[] content = reader.open(treeWalk.getObjectId(0)).getBytes();
                     switch (entryType) {
                         case JSON:
-                            final JsonNode jsonNode = Jackson.readTree(content);
-                            entry = Entry.ofJson(normRevision, path, jsonNode);
+                            entry = Entry.ofJson(normRevision, path, new String(content, UTF_8));
                             break;
                         case TEXT:
                             final String strVal = sanitizeText(new String(content, UTF_8));

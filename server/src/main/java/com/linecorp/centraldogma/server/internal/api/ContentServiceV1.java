@@ -260,6 +260,7 @@ public class ContentServiceV1 extends AbstractService {
     public CompletableFuture<?> getFiles(
             ServiceRequestContext ctx,
             @Param String path, @Param @Default("-1") String revision,
+            @Param @Default("false") boolean preferRawContent,
             Repository repository,
             @RequestConverter(WatchRequestConverter.class) @Nullable WatchRequest watchRequest,
             @RequestConverter(QueryRequestConverter.class) @Nullable Query<?> query) {

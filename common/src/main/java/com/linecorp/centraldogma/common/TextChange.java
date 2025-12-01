@@ -22,8 +22,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
 
-import javax.annotation.Nullable;
-
 import com.google.common.base.MoreObjects;
 
 final class TextChange extends AbstractChange<String> {
@@ -44,10 +42,9 @@ final class TextChange extends AbstractChange<String> {
         return content;
     }
 
-    @Nullable
     @Override
     public String rawContent() {
-        return null;
+        return content;
     }
 
     @Override
