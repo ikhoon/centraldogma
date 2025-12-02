@@ -16,18 +16,20 @@
 
 package com.linecorp.centraldogma.common;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+
+import com.linecorp.centraldogma.internal.Jackson;
 
 final class ChangeDeserializer extends StdDeserializer<Change<?>> {
 
@@ -67,11 +69,11 @@ final class ChangeDeserializer extends StdDeserializer<Change<?>> {
         requireNonNull(type, "type");
         final Class<?> contentType = type.contentType();
         if (contentType == Void.class) {
-            if (content != null && !content.isNull()) {
+            if ((content != null && !content.isNull()) || rawContent != null) {
                 return rejectIncompatibleContent(content, Void.class);
             }
         } else if (type.contentType() == String.class) {
-            if (content == null || !content.isTextual()) {
+            if (content != null && !content.isTextual()) {
                 return rejectIncompatibleContent(content, String.class);
             }
         }
@@ -80,8 +82,14 @@ final class ChangeDeserializer extends StdDeserializer<Change<?>> {
             return Change.ofRemoval(path);
         }
 
-        checkArgument(content != null || rawContent != null,
-        "Either content or rawContent must be non-null for type: %s", type);
+        if (content == null && rawContent == null) {
+            throw new IllegalArgumentException(
+                    "content or rawContent is required for type: " + type);
+        }
+        if (content != null && rawContent != null) {
+            throw new IllegalArgumentException(
+                    "only one of content or rawContent must be set for type: " + type);
+        }
 
         final Change<?> result;
         switch (type) {
@@ -94,16 +102,32 @@ final class ChangeDeserializer extends StdDeserializer<Change<?>> {
                 }
                 break;
             case UPSERT_TEXT:
-                result = Change.ofTextUpsert(path, content.asText());
+                if (rawContent != null) {
+                    result = Change.ofTextUpsert(path, rawContent);
+                } else {
+                    result = Change.ofTextUpsert(path, content.asText());
+                }
                 break;
             case RENAME:
                 result = Change.ofRename(path, content.asText());
                 break;
             case APPLY_JSON_PATCH:
-                result = Change.ofJsonPatch(path, content);
+                if (rawContent != null) {
+                    try {
+                        result = Change.ofJsonPatch(path, Jackson.readTree(rawContent));
+                    } catch (JsonParseException e) {
+                        throw new IllegalArgumentException("failed to parse JSON patch", e);
+                    }
+                } else {
+                    result = Change.ofJsonPatch(path, content);
+                }
                 break;
             case APPLY_TEXT_PATCH:
-                result = Change.ofTextPatch(path, content.asText());
+                if (rawContent != null) {
+                    result = Change.ofTextPatch(path, rawContent);
+                } else {
+                    result = Change.ofTextPatch(path, content.asText());
+                }
                 break;
             default:
                 // Should never reach here

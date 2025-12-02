@@ -73,12 +73,21 @@ final class DefaultChangesApplier extends AbstractChangesApplier {
 
             switch (change.type()) {
                 case UPSERT_JSON: {
-                    final JsonNode oldJsonNode = oldContent != null ? Jackson.readTree(oldContent) : null;
+                    final String rawContent = change.rawContent();
                     final JsonNode newJsonNode = firstNonNull((JsonNode) change.content(),
                                                               JsonNodeFactory.instance.nullNode());
+                    final boolean hasChanges;
+                    if (rawContent != null) {
+                        // If rawContent is provided, compare the raw JSON text.
+                        final String oldRawContent = oldContent != null ? new String(oldContent, UTF_8) : null;
+                        hasChanges = !rawContent.equals(oldRawContent);
+                    } else {
+                        // Otherwise, compare the parsed JSON nodes.
+                        final JsonNode oldJsonNode = oldContent != null ? Jackson.readTree(oldContent) : null;
+                        hasChanges = !Objects.equals(newJsonNode, oldJsonNode);
+                    }
 
-                    // Upsert only when the contents are really different.
-                    if (!Objects.equals(newJsonNode, oldJsonNode)) {
+                    if (hasChanges) {
                         applyPathEdit(dirCache,
                                       new InsertJson(changePath, inserter, newJsonNode, change.rawContent()));
                         numEdits++;
