@@ -118,5 +118,4 @@ final class ChangeDeserializer extends StdDeserializer<Change<?>> {
         throw new IllegalArgumentException("incompatible content: " + content +
                                            " (expected: " + contentType.getName() + ')');
     }
-
 }

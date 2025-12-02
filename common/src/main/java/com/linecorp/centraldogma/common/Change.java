@@ -34,9 +34,9 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
@@ -52,7 +52,8 @@ import difflib.Patch;
 /**
  * A modification of an individual {@link Entry}.
  */
-@JsonDeserialize(using= ChangeDeserializer.class)
+@JsonDeserialize(using = ChangeDeserializer.class)
+@JsonSerialize(using = ChangeSerializer.class)
 public interface Change<T> {
 
     /**
@@ -366,20 +367,17 @@ public interface Change<T> {
     /**
      * Returns the type of the {@link Change}.
      */
-    @JsonProperty
     ChangeType type();
 
     /**
      * Returns the path of the {@link Change}.
      */
-    @JsonProperty
     String path();
 
     /**
      * Returns the content of the {@link Change}, which depends on the {@link #type()}.
      */
     @Nullable
-    @JsonProperty
     T content();
 
     /**

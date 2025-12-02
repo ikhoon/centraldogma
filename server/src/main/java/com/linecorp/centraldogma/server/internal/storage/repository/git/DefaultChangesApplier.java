@@ -79,7 +79,8 @@ final class DefaultChangesApplier extends AbstractChangesApplier {
 
                     // Upsert only when the contents are really different.
                     if (!Objects.equals(newJsonNode, oldJsonNode)) {
-                        applyPathEdit(dirCache, new InsertJson(changePath, inserter, newJsonNode, change.rawContent()));
+                        applyPathEdit(dirCache,
+                                      new InsertJson(changePath, inserter, newJsonNode, change.rawContent()));
                         numEdits++;
                     }
                     break;
@@ -167,8 +168,7 @@ final class DefaultChangesApplier extends AbstractChangesApplier {
 
                     // Apply only when the contents are really different.
                     if (!newJsonNode.equals(oldJsonNode)) {
-                        applyPathEdit(dirCache, new InsertJson(changePath, inserter, newJsonNode,
-                                                               change.rawContent()));
+                        applyPathEdit(dirCache, new InsertJson(changePath, inserter, newJsonNode, null));
                         numEdits++;
                     }
                     break;

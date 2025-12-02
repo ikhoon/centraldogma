@@ -48,7 +48,7 @@ public class EntryDto<T> {
     private final String url;
 
     public EntryDto(Revision revision, String path, EntryType type,
-                    String projectName, String repoName, @Nullable T content, String rawContent) {
+                    String projectName, String repoName, @Nullable T content, @Nullable String rawContent) {
         this.revision = requireNonNull(revision, "revision");
         this.path = requireNonNull(path, "path");
         this.type = requireNonNull(type, "type");

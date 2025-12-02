@@ -95,6 +95,7 @@ abstract class AbstractChangesApplier {
             try {
                 final byte[] jsonBytes;
                 if (jsonText != null) {
+                    // Use the raw JSON text if available to preserve formatting and comments.
                     jsonBytes = jsonText.getBytes(UTF_8);
                 } else {
                     jsonBytes = Jackson.writeValueAsBytes(jsonNode);

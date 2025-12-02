@@ -58,7 +58,7 @@ final class JsonChange extends AbstractChange<JsonNode> {
         } else {
             assert jsonText != null;
             try {
-                // Validate that jsonText is a valid JSON.
+                // Check if jsonText is a valid JSON.
                 this.jsonNode = Jackson.readTree(jsonText);
             } catch (JsonProcessingException e) {
                 throw new ChangeFormatException("failed to read a value as a JSON tree", e);
@@ -103,13 +103,12 @@ final class JsonChange extends AbstractChange<JsonNode> {
             return false;
         }
         final JsonChange that = (JsonChange) o;
-        return Objects.equals(jsonNode, that.jsonNode) &&
-               Objects.equals(jsonText, that.jsonText);
+        return Objects.equals(jsonNode, that.jsonNode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), jsonNode, jsonText);
+        return Objects.hash(super.hashCode(), jsonNode);
     }
 
     @Override
