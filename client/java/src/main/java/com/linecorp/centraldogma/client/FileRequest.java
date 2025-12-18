@@ -59,6 +59,6 @@ public final class FileRequest<T> extends AbstractFileRequest<FileRequest<T>> {
         }
         return centralDogmaRepo.centralDogma().getFile(centralDogmaRepo.projectName(),
                                                        centralDogmaRepo.repositoryName(),
-                                                       revision, query, viewRaw());
+                                                       revision, query, viewRaw(), applyTemplate());
     }
 }

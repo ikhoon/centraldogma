@@ -197,7 +197,7 @@ public interface CentralDogma extends AutoCloseable {
      */
     default <T> CompletableFuture<Entry<T>> getFile(String projectName, String repositoryName,
                                                     Revision revision, Query<T> query) {
-        return getFile(projectName, repositoryName, revision, query, false);
+        return getFile(projectName, repositoryName, revision, query, false, false);
     }
 
     /**
@@ -215,7 +215,8 @@ public interface CentralDogma extends AutoCloseable {
      * @return the {@link Entry} that is matched by the given {@link Query}
      */
     <T> CompletableFuture<Entry<T>> getFile(String projectName, String repositoryName,
-                                            Revision revision, Query<T> query, boolean viewRaw);
+                                            Revision revision, Query<T> query, boolean viewRaw,
+                                            boolean applyTemplate);
 
     /**
      * Retrieves the files matched by the path pattern.
@@ -244,7 +245,7 @@ public interface CentralDogma extends AutoCloseable {
      */
     default CompletableFuture<Map<String, Entry<?>>> getFiles(String projectName, String repositoryName,
                                                               Revision revision, PathPattern pathPattern) {
-        return getFiles(projectName, repositoryName, revision, pathPattern, false);
+        return getFiles(projectName, repositoryName, revision, pathPattern, false, false);
     }
 
     /**
@@ -263,7 +264,7 @@ public interface CentralDogma extends AutoCloseable {
      */
     CompletableFuture<Map<String, Entry<?>>> getFiles(String projectName, String repositoryName,
                                                       Revision revision, PathPattern pathPattern,
-                                                      boolean viewRaw);
+                                                      boolean viewRaw, boolean applyTemplate);
 
     /**
      * Retrieves the merged entry of the specified {@link MergeSource}s at the specified revision.
@@ -792,7 +793,7 @@ public interface CentralDogma extends AutoCloseable {
                                                       Revision lastKnownRevision, Query<T> query,
                                                       long timeoutMillis, boolean errorOnEntryNotFound) {
         return watchFile(projectName, repositoryName, lastKnownRevision, query,
-                         timeoutMillis, errorOnEntryNotFound, false);
+                         timeoutMillis, errorOnEntryNotFound, false, false);
     }
 
     /**
@@ -821,7 +822,7 @@ public interface CentralDogma extends AutoCloseable {
     <T> CompletableFuture<Entry<T>> watchFile(String projectName, String repositoryName,
                                               Revision lastKnownRevision, Query<T> query,
                                               long timeoutMillis, boolean errorOnEntryNotFound,
-                                              boolean viewRaw);
+                                              boolean viewRaw, boolean applyTemplate);
 
     /**
      * Returns a {@link Watcher} which notifies its listeners when the result of the

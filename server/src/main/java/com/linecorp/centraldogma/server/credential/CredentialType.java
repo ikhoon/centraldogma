@@ -36,6 +36,16 @@ public enum CredentialType {
     ACCESS_TOKEN,
 
     /**
+     * A credential that consists of a string.
+     */
+    STRING,
+
+    /**
+     * A credential that consists of a JSON object.
+     */
+    JSON,
+
+    /**
      * A none credential.
      */
     NONE

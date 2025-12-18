@@ -21,6 +21,7 @@ import com.linecorp.centraldogma.common.QueryType;
 class AbstractFileRequest<SELF extends AbstractFileRequest<SELF>> {
 
     private boolean viewRaw;
+    private boolean applyTemplate;
 
     /**
      * Sets whether to view the raw content of the file.
@@ -38,6 +39,23 @@ class AbstractFileRequest<SELF extends AbstractFileRequest<SELF>> {
      */
     boolean viewRaw() {
         return viewRaw;
+    }
+
+    /**
+     * Sets whether to apply template processing to the file using the variables defined in
+     * the same repository and its parent project.
+     *
+     * <p>If {@link #viewRaw(boolean)} is set to true, the template processing will be applied to the raw
+     * content. If {@link #viewRaw(boolean)} is set to false, the template processing will be applied to the
+     * normalized content.
+     */
+    public SELF applyTemplate(boolean applyTemplate) {
+        this.applyTemplate = applyTemplate;
+        return self();
+    }
+
+    boolean applyTemplate() {
+        return applyTemplate;
     }
 
     @SuppressWarnings("unchecked")

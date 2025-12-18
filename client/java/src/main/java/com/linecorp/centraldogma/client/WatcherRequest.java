@@ -16,6 +16,7 @@
 package com.linecorp.centraldogma.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
@@ -60,7 +61,7 @@ public final class WatcherRequest<T> extends WatchOptions {
     private long maxDelayMillis = DEFAULT_MAX_DELAY_MILLIS;
     private double multiplier = DEFAULT_MULTIPLIER;
     private double jitterRate = DEFAULT_JITTER_RATE;
-    private boolean viewRaw;
+    private boolean applyTemplate;
 
     WatcherRequest(CentralDogmaRepository centralDogmaRepo, Query<T> query,
                    ScheduledExecutorService blockingTaskExecutor, @Nullable MeterRegistry meterRegistry) {
@@ -151,6 +152,15 @@ public final class WatcherRequest<T> extends WatchOptions {
         return this;
     }
 
+    /**
+     * Sets whether to apply template processing to the file using the variables defined in
+     * the same repository and its parent project.
+     */
+    public WatcherRequest<T> applyTemplate(boolean applyTemplate) {
+        this.applyTemplate = applyTemplate;
+        return this;
+    }
+
     @Override
     public WatcherRequest<T> timeout(Duration timeout) {
         //noinspection unchecked
@@ -181,8 +191,9 @@ public final class WatcherRequest<T> extends WatchOptions {
             watcher = new FileWatcher<>(
                     centralDogmaRepo.centralDogma(), blockingTaskExecutor, proName, repoName, query,
                     timeoutMillis(), errorOnEntryNotFound(), mapper, executor, delayOnSuccessMillis,
-                    initialDelayMillis, maxDelayMillis, multiplier, jitterRate, meterRegistry);
+                    initialDelayMillis, maxDelayMillis, multiplier, jitterRate, meterRegistry, applyTemplate);
         } else {
+            checkState(!applyTemplate, "applyTemplate can't be set when watching multiple files.");
             assert pathPattern != null;
             watcher = new FilesWatcher<>(
                     centralDogmaRepo.centralDogma(), blockingTaskExecutor, proName, repoName, pathPattern,

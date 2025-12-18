@@ -467,7 +467,7 @@ public final class ArmeriaCentralDogma extends AbstractCentralDogma {
 
     @Override
     public <T> CompletableFuture<Entry<T>> getFile(String projectName, String repositoryName, Revision revision,
-                                                   Query<T> query, boolean viewRaw) {
+                                                   Query<T> query, boolean viewRaw, boolean applyTemplate) {
         validateProjectAndRepositoryName(projectName, repositoryName);
         requireNonNull(revision, "revision");
         requireNonNull(query, "query");
@@ -479,6 +479,9 @@ public final class ArmeriaCentralDogma extends AbstractCentralDogma {
                 path.append("?revision=").append(normRev.text());
                 if (viewRaw) {
                     path.append("&viewRaw=true");
+                }
+                if (applyTemplate) {
+                    path.append("&applyTemplate=true");
                 }
                 appendJsonPaths(path, query.type(), query.expressions());
 
@@ -504,7 +507,7 @@ public final class ArmeriaCentralDogma extends AbstractCentralDogma {
     @Override
     public CompletableFuture<Map<String, Entry<?>>> getFiles(String projectName, String repositoryName,
                                                              Revision revision, PathPattern pathPattern,
-                                                             boolean viewRaw) {
+                                                             boolean viewRaw, boolean applyTemplate) {
         validateProjectAndRepositoryName(projectName, repositoryName);
         requireNonNull(revision, "revision");
         requireNonNull(pathPattern, "pathPattern");
@@ -518,6 +521,9 @@ public final class ArmeriaCentralDogma extends AbstractCentralDogma {
                     .append(normRev.major());
                 if (viewRaw) {
                     path.append("&viewRaw=true");
+                }
+                if (applyTemplate) {
+                    path.append("&applyTemplate=true");
                 }
 
                 return client.execute(headers(HttpMethod.GET, path.toString()))
@@ -867,7 +873,7 @@ public final class ArmeriaCentralDogma extends AbstractCentralDogma {
     public <T> CompletableFuture<Entry<T>> watchFile(String projectName, String repositoryName,
                                                      Revision lastKnownRevision, Query<T> query,
                                                      long timeoutMillis, boolean errorOnEntryNotFound,
-                                                     boolean viewRaw) {
+                                                     boolean viewRaw, boolean applyTemplate) {
         validateProjectAndRepositoryName(projectName, repositoryName);
         requireNonNull(lastKnownRevision, "lastKnownRevision");
         requireNonNull(query, "query");
@@ -892,6 +898,13 @@ public final class ArmeriaCentralDogma extends AbstractCentralDogma {
             if (viewRaw) {
                 // The query type can't be JSON_PATH here as checked above.
                 path.append("?viewRaw=true");
+            }
+            if (applyTemplate) {
+                if (path.indexOf("?") >= 0) {
+                    path.append("&applyTemplate=true");
+                } else {
+                    path.append("?applyTemplate=true");
+                }
             }
 
             return watch(lastKnownRevision, timeoutMillis, path.toString(), query.type(),

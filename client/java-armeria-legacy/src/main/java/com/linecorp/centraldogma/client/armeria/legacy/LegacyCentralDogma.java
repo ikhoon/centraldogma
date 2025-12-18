@@ -281,12 +281,12 @@ final class LegacyCentralDogma extends AbstractCentralDogma {
     @Override
     public CompletableFuture<Map<String, Entry<?>>> getFiles(String projectName, String repositoryName,
                                                              Revision revision, PathPattern pathPattern,
-                                                             boolean viewRaw) {
+                                                             boolean viewRaw, boolean applyTemplate) {
         requireNonNull(pathPattern, "pathPattern");
         return maybeNormalizeRevision(projectName, repositoryName, revision).thenCompose(normRev -> {
             final CompletableFuture<List<com.linecorp.centraldogma.internal.thrift.Entry>> future =
                     run(callback -> {
-                        // viewRaw is not supported in LegacyCentralDogma.
+                        // viewRaw and applyTemplate are not supported in LegacyCentralDogma.
                         client.getFiles(projectName, repositoryName,
                                         RevisionConverter.TO_DATA.convert(normRev),
                                         pathPattern.patternString(), callback);
@@ -488,13 +488,13 @@ final class LegacyCentralDogma extends AbstractCentralDogma {
     public <T> CompletableFuture<Entry<T>> watchFile(String projectName, String repositoryName,
                                                      Revision lastKnownRevision, Query<T> query,
                                                      long timeoutMillis, boolean errorOnEntryNotFound,
-                                                     boolean viewRaw) {
+                                                     boolean viewRaw, boolean applyTemplate) {
         checkArgument(!errorOnEntryNotFound, "errorOnEntryNotFound is not supported in LegacyCentralDogma.");
         validateProjectAndRepositoryName(projectName, repositoryName);
         requireNonNull(lastKnownRevision, "lastKnownRevision");
         requireNonNull(query, "query");
         final CompletableFuture<WatchFileResult> future = run(callback -> {
-            // viewRaw is not supported in LegacyCentralDogma.
+            // viewRaw and applyTemplate are not supported in LegacyCentralDogma.
             client.watchFile(projectName, repositoryName,
                              RevisionConverter.TO_DATA.convert(lastKnownRevision),
                              QueryConverter.TO_DATA.convert(query),

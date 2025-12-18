@@ -35,6 +35,7 @@ public final class WatchRequest<T> extends WatchOptions {
     private final CentralDogmaRepository centralDogmaRepo;
     private final Query<T> query;
     private boolean viewRaw;
+    private boolean applyTemplate;
 
     WatchRequest(CentralDogmaRepository centralDogmaRepo, Query<T> query) {
         this.centralDogmaRepo = centralDogmaRepo;
@@ -75,6 +76,19 @@ public final class WatchRequest<T> extends WatchOptions {
     }
 
     /**
+     * Sets whether to apply template processing to the file using the variables defined in
+     * the same repository and its parent project.
+     *
+     * <p>If {@link #viewRaw(boolean)} is set to true, the template processing will be applied to the raw
+     * content. If {@link #viewRaw(boolean)} is set to false, the template processing will be applied to the
+     * normalized content.
+     */
+    public WatchRequest<T> applyTemplate(boolean applyTemplate) {
+        this.applyTemplate = applyTemplate;
+        return this;
+    }
+
+    /**
      * Waits for the file matched by the {@link Query} to be changed since the {@link Revision#HEAD}.
      * If no changes were made within the {@link #timeoutMillis(long)}, the
      * returned {@link CompletableFuture} will be completed with {@code null}.
@@ -103,6 +117,7 @@ public final class WatchRequest<T> extends WatchOptions {
         return centralDogmaRepo.centralDogma().watchFile(centralDogmaRepo.projectName(),
                                                          centralDogmaRepo.repositoryName(),
                                                          lastKnownRevision, query,
-                                                         timeoutMillis(), errorOnEntryNotFound(), viewRaw);
+                                                         timeoutMillis(), errorOnEntryNotFound(), viewRaw,
+                                                         applyTemplate);
     }
 }

@@ -40,12 +40,13 @@ final class FileWatcher<T> extends AbstractWatcher<T> {
     private final Function<Object, ? extends T> mapper;
     @Nullable
     private final Executor mapperExecutor;
+    private final boolean applyTemplate;
 
     FileWatcher(CentralDogma centralDogma, ScheduledExecutorService watchScheduler, String projectName,
                 String repositoryName, Query<T> query, long timeoutMillis, boolean errorOnEntryNotFound,
                 @Nullable Function<Object, ? extends T> mapper, Executor mapperExecutor,
                 long delayOnSuccessMillis, long initialDelayMillis, long maxDelayMillis, double multiplier,
-                double jitterRate, @Nullable MeterRegistry meterRegistry) {
+                double jitterRate, @Nullable MeterRegistry meterRegistry, boolean applyTemplate) {
         super(watchScheduler, projectName, repositoryName, query.path(), errorOnEntryNotFound,
               delayOnSuccessMillis, initialDelayMillis, maxDelayMillis, multiplier, jitterRate, meterRegistry);
         this.centralDogma = centralDogma;
@@ -56,13 +57,15 @@ final class FileWatcher<T> extends AbstractWatcher<T> {
         this.errorOnEntryNotFound = errorOnEntryNotFound;
         this.mapper = mapper;
         this.mapperExecutor = mapperExecutor;
+        this.applyTemplate = applyTemplate;
     }
 
     @Override
     CompletableFuture<Latest<T>> doWatch(Revision lastKnownRevision) {
         final CompletableFuture<Entry<T>> future = centralDogma.watchFile(projectName, repositoryName,
                                                                           lastKnownRevision, query,
-                                                                          timeoutMillis, errorOnEntryNotFound);
+                                                                          timeoutMillis, errorOnEntryNotFound,
+                                                                          false, applyTemplate);
         if (mapper == null) {
             return future.thenApply(entry -> {
                 if (entry == null) {

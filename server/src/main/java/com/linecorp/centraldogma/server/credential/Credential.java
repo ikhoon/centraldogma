@@ -24,9 +24,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import com.linecorp.centraldogma.server.internal.credential.AccessTokenCredential;
+import com.linecorp.centraldogma.server.internal.credential.JsonCredential;
 import com.linecorp.centraldogma.server.internal.credential.NoneCredential;
 import com.linecorp.centraldogma.server.internal.credential.PasswordCredential;
 import com.linecorp.centraldogma.server.internal.credential.SshKeyCredential;
+import com.linecorp.centraldogma.server.internal.credential.StringCredential;
 
 /**
  * A credential used to access external resources such as Git repositories or the Kubernetes control plane.
@@ -36,7 +38,9 @@ import com.linecorp.centraldogma.server.internal.credential.SshKeyCredential;
         @Type(value = NoneCredential.class, name = "NONE"),
         @Type(value = PasswordCredential.class, name = "PASSWORD"),
         @Type(value = SshKeyCredential.class, name = "SSH_KEY"),
-        @Type(value = AccessTokenCredential.class, name = "ACCESS_TOKEN")
+        @Type(value = AccessTokenCredential.class, name = "ACCESS_TOKEN"),
+        @Type(value = StringCredential.class, name = "STRING"),
+        @Type(value = JsonCredential.class, name = "JSON")
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

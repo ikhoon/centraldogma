@@ -23,7 +23,6 @@ import static com.linecorp.centraldogma.common.EntryType.DIRECTORY;
 import static com.linecorp.centraldogma.internal.Util.isValidDirPath;
 import static com.linecorp.centraldogma.internal.Util.isValidFilePath;
 import static com.linecorp.centraldogma.server.internal.api.DtoConverter.newEntryDto;
-import static com.linecorp.centraldogma.server.internal.api.HttpApiUtil.returnOrThrow;
 import static com.linecorp.centraldogma.server.internal.api.RepositoryServiceV1.increaseCounterIfOldRevisionUsed;
 import static com.linecorp.centraldogma.server.internal.storage.repository.DefaultMetaRepository.isMirrorOrCredentialFile;
 import static com.linecorp.centraldogma.server.metadata.MetadataService.METADATA_JSON;
@@ -50,6 +49,7 @@ import com.linecorp.armeria.common.HttpHeaderNames;
 import com.linecorp.armeria.common.HttpResponse;
 import com.linecorp.armeria.common.HttpStatus;
 import com.linecorp.armeria.common.util.Exceptions;
+import com.linecorp.armeria.common.util.UnmodifiableFuture;
 import com.linecorp.armeria.server.ServiceRequestContext;
 import com.linecorp.armeria.server.annotation.ConsumesJson;
 import com.linecorp.armeria.server.annotation.Default;
@@ -84,7 +84,9 @@ import com.linecorp.centraldogma.server.internal.api.converter.MergeQueryRequest
 import com.linecorp.centraldogma.server.internal.api.converter.QueryRequestConverter;
 import com.linecorp.centraldogma.server.internal.api.converter.WatchRequestConverter;
 import com.linecorp.centraldogma.server.internal.api.converter.WatchRequestConverter.WatchRequest;
+import com.linecorp.centraldogma.server.internal.api.variable.Templater;
 import com.linecorp.centraldogma.server.storage.project.Project;
+import com.linecorp.centraldogma.server.storage.project.ProjectManager;
 import com.linecorp.centraldogma.server.storage.repository.FindOption;
 import com.linecorp.centraldogma.server.storage.repository.FindOptions;
 import com.linecorp.centraldogma.server.storage.repository.Repository;
@@ -107,11 +109,14 @@ public class ContentServiceV1 extends AbstractService {
 
     private final WatchService watchService;
     private final MeterRegistry meterRegistry;
+    private final Templater templater;
 
-    public ContentServiceV1(CommandExecutor executor, WatchService watchService, MeterRegistry meterRegistry) {
+    public ContentServiceV1(CommandExecutor executor, ProjectManager pm, WatchService watchService,
+                            MeterRegistry meterRegistry) {
         super(executor);
         this.watchService = requireNonNull(watchService, "watchService");
         this.meterRegistry = requireNonNull(meterRegistry, "meterRegistry");
+        templater = new Templater(executor, pm);
     }
 
     /**
@@ -128,35 +133,38 @@ public class ContentServiceV1 extends AbstractService {
         final Revision normalizedRev = repository.normalizeNow(new Revision(revision));
         increaseCounterIfOldRevisionUsed(ctx, repository, normalizedRev);
         final CompletableFuture<List<EntryDto<?>>> future = new CompletableFuture<>();
-        findFiles(repository, normalizedPath, normalizedRev, false, false, future);
+        findFiles(repository, normalizedPath, normalizedRev, false, false, false, future);
         return future;
     }
 
-    private static void findFiles(Repository repository, String pathPattern, Revision normalizedRev,
-                                  boolean withContent, boolean viewRaw,
-                                  CompletableFuture<List<EntryDto<?>>> result) {
+    private void findFiles(Repository repository, String pathPattern, Revision normalizedRev,
+                           boolean withContent, boolean viewRaw, boolean applyTemplate,
+                           CompletableFuture<List<EntryDto<?>>> result) {
         final Map<FindOption<?>, ?> options = withContent ? FindOptions.FIND_ALL_WITH_CONTENT
                                                           : FindOptions.FIND_ALL_WITHOUT_CONTENT;
 
-        repository.find(normalizedRev, pathPattern, options).handle((entries, thrown) -> {
-            if (thrown != null) {
-                result.completeExceptionally(thrown);
-                return null;
-            }
-            // If the pathPattern is a valid file path and the result is a directory, the client forgets to add
-            // "/*" to the end of the path. So, let's do it and invoke once more.
-            // This is called once at most, because the pathPattern is not a valid file path anymore.
-            if (isValidFilePath(pathPattern) && entries.size() == 1 &&
-                entries.values().iterator().next().type() == DIRECTORY) {
-                findFiles(repository, pathPattern + "/*", normalizedRev, withContent, viewRaw, result);
-            } else {
-                result.complete(entries.values().stream()
-                                       .map(entry -> newEntryDto(repository, normalizedRev, entry, withContent,
-                                                                 viewRaw))
-                                       .collect(toImmutableList()));
-            }
-            return null;
-        });
+        repository.find(normalizedRev, pathPattern, options)
+                  .thenCompose(entries -> renderTemplate(entries, repository, applyTemplate))
+                  .handle((entries, thrown) -> {
+                      if (thrown != null) {
+                          result.completeExceptionally(thrown);
+                          return null;
+                      }
+                      // If the pathPattern is a valid file path and the result is a directory, the client forgets to add
+                      // "/*" to the end of the path. So, let's do it and invoke once more.
+                      // This is called once at most, because the pathPattern is not a valid file path anymore.
+                      if (isValidFilePath(pathPattern) && entries.size() == 1 &&
+                          entries.iterator().next().type() == DIRECTORY) {
+                          findFiles(repository, pathPattern + "/*", normalizedRev, withContent, viewRaw,
+                                    applyTemplate, result);
+                      } else {
+                          result.complete(entries.stream()
+                                                 .map(entry -> newEntryDto(repository, normalizedRev, entry,
+                                                                           withContent, viewRaw))
+                                                 .collect(toImmutableList()));
+                      }
+                      return null;
+                  });
     }
 
     /**
@@ -262,6 +270,7 @@ public class ContentServiceV1 extends AbstractService {
             ServiceRequestContext ctx,
             @Param String path, @Param @Default("-1") String revision,
             @Param @Default("false") boolean viewRaw,
+            @Param @Default("false") boolean applyTemplate,
             Repository repository,
             @RequestConverter(WatchRequestConverter.class) @Nullable WatchRequest watchRequest,
             @RequestConverter(QueryRequestConverter.class) @Nullable Query<?> query) {
@@ -276,7 +285,7 @@ public class ContentServiceV1 extends AbstractService {
             final boolean errorOnEntryNotFound = watchRequest.notifyEntryNotFound();
             if (query != null) {
                 return watchFile(ctx, repository, lastKnownRevision, query, timeOutMillis,
-                                 errorOnEntryNotFound, viewRaw);
+                                 errorOnEntryNotFound, viewRaw, applyTemplate);
             }
 
             return watchRepository(ctx, repository, lastKnownRevision, normalizedPath,
@@ -287,20 +296,21 @@ public class ContentServiceV1 extends AbstractService {
         if (query != null) {
             // get a file
             return repository.get(normalizedRev, query)
-                             .handle(returnOrThrow((Entry<?> result) -> newEntryDto(repository, normalizedRev,
-                                                                                    result, true, viewRaw)));
+                             .thenCompose(entry -> renderTemplate(entry, repository, applyTemplate))
+                             .thenAccept(result -> newEntryDto(repository, normalizedRev,
+                                                               result, true, viewRaw));
         }
 
         // get files
         final CompletableFuture<List<EntryDto<?>>> future = new CompletableFuture<>();
-        findFiles(repository, normalizedPath, normalizedRev, true, viewRaw, future);
+        findFiles(repository, normalizedPath, normalizedRev, true, viewRaw, applyTemplate, future);
         return future;
     }
 
     private CompletableFuture<?> watchFile(ServiceRequestContext ctx,
                                            Repository repository, Revision lastKnownRevision,
                                            Query<?> query, long timeOutMillis, boolean errorOnEntryNotFound,
-                                           boolean viewRaw) {
+                                           boolean viewRaw, boolean applyTemplate) {
         final CompletableFuture<? extends Entry<?>> future = watchService.watchFile(
                 repository, lastKnownRevision, query, timeOutMillis, errorOnEntryNotFound);
 
@@ -308,11 +318,31 @@ public class ContentServiceV1 extends AbstractService {
             ctx.log().whenComplete().thenRun(() -> future.cancel(false));
         }
 
-        return future.thenApply(entry -> {
-            final Revision revision = entry.revision();
-            final EntryDto<?> entryDto = newEntryDto(repository, revision, entry, true, viewRaw);
-            return (Object) new WatchResultDto(revision, entryDto);
-        }).exceptionally(ContentServiceV1::handleWatchFailure);
+        return future.thenCompose(entry -> renderTemplate(entry, repository, applyTemplate))
+                     .thenApply(entry -> {
+                         final Revision revision = entry.revision();
+                         final EntryDto<?> entryDto = newEntryDto(repository, revision, entry, true, viewRaw);
+                         return (Object) new WatchResultDto(revision, entryDto);
+                     }).exceptionally(ContentServiceV1::handleWatchFailure);
+    }
+
+    private CompletableFuture<Collection<Entry<?>>> renderTemplate(Map<String, Entry<?>> entries,
+                                                                   Repository repository,
+                                                                   boolean applyTemplate) {
+        if (applyTemplate) {
+            return templater.render(repository, entries.values());
+        } else {
+            return UnmodifiableFuture.completedFuture(entries.values());
+        }
+    }
+
+    private CompletableFuture<Entry<?>> renderTemplate(Entry<?> entry, Repository repository,
+                                                       boolean applyTemplate) {
+        if (applyTemplate) {
+            return templater.render(repository, entry);
+        } else {
+            return UnmodifiableFuture.completedFuture(entry);
+        }
     }
 
     private CompletableFuture<?> watchRepository(ServiceRequestContext ctx,
