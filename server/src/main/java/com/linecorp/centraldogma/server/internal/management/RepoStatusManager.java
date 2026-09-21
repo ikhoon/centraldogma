@@ -284,7 +284,7 @@ public final class RepoStatusManager {
         }
         return statesFuture.handle((states, cause) -> {
             if (cause != null) {
-                return RepoStatusManager.<Void>failUnlessStatusStorageAbsent(cause);
+                return failUnlessStatusStorageAbsent(cause);
             }
             // Clean up each repository independently so a single failure does not skip the rest.
             CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
@@ -301,7 +301,7 @@ public final class RepoStatusManager {
         }).thenCompose(Function.identity());
     }
 
-    private static <T> CompletableFuture<T> failUnlessStatusStorageAbsent(Throwable cause) {
+    private static CompletableFuture<Void> failUnlessStatusStorageAbsent(Throwable cause) {
         final Throwable peeled = Exceptions.peel(cause);
         if (peeled instanceof ProjectNotFoundException || peeled instanceof RepositoryNotFoundException) {
             return CompletableFuture.completedFuture(null);
