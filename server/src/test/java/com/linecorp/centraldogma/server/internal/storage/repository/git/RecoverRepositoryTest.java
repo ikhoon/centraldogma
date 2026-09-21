@@ -89,7 +89,7 @@ class RecoverRepositoryTest {
         final Revision head = repo.normalizeNow(Revision.HEAD);
         final String headId = commitId(repo, head);
         final List<ReplayCommit> payload =
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5));
 
         // The source (and any healthy replica) is already at the target -> recovery is a no-op and the
         // repository is left untouched.
@@ -111,7 +111,7 @@ class RecoverRepositoryTest {
         pushMixedRevisions(repo); // head == r5
         final String sourceTreeId = repo.head().treeId();
         final List<ReplayCommit> payload = withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
 
         // The local r6 is discarded. The recovery must leave the repository at r7, so a client that last
         // observed r6 never receives a lower revision after the rewrite.
@@ -165,7 +165,7 @@ class RecoverRepositoryTest {
         final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(repo); // head == r5
         final List<ReplayCommit> payload = withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
         repo.commit(new Revision(5), 6000L, Author.SYSTEM, "diverged", "", Markup.PLAINTEXT,
                     ImmutableList.of(Change.ofTextUpsert("/g.txt", "diverged")), false).join();
         repo.commit(new Revision(6), 7000L, Author.SYSTEM, "still diverged", "", Markup.PLAINTEXT,
@@ -190,7 +190,7 @@ class RecoverRepositoryTest {
         final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(repo); // head == r5
         final List<ReplayCommit> payload = withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
         repo.commit(new Revision(5), 6000L, Author.SYSTEM, "diverged", "", Markup.PLAINTEXT,
                     ImmutableList.of(Change.ofTextUpsert("/g.txt", "diverged")), false).join();
 
@@ -214,14 +214,14 @@ class RecoverRepositoryTest {
         final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(repo); // head == r5
         final List<ReplayCommit> firstPayload = withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
         repo.commit(new Revision(5), 6000L, Author.SYSTEM, "diverged", "", Markup.PLAINTEXT,
                     ImmutableList.of(Change.ofTextUpsert("/g.txt", "diverged")), false).join();
         mgr.recoverRepository(REPO, firstPayload);
 
         final String recoveredTreeId = repo.head().treeId();
         final List<ReplayCommit> rawSecondPayload =
-                mgr.buildRecoveryPayload(REPO, new Revision(5), new Revision(7));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(5), new Revision(7));
         assertThat(rawSecondPayload).extracting(ReplayCommit::revision)
                                     .containsExactly(new Revision(5), new Revision(6), new Revision(7));
         final ReplayCommit sourceCommit = rawSecondPayload.get(0);
@@ -280,7 +280,7 @@ class RecoverRepositoryTest {
                 final ExecutorService requestThread = Executors.newSingleThreadExecutor();
                 try {
                     final Future<List<ReplayCommit>> payload = requestThread.submit(
-                            () -> mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)));
+                            () -> mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)));
                     assertThat(payload.get(30, TimeUnit.SECONDS)).hasSize(3);
                 } finally {
                     requestThread.shutdownNow();
@@ -306,7 +306,7 @@ class RecoverRepositoryTest {
             final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
             pushMixedRevisions(repo);
             final List<ReplayCommit> payload = withPaddingThrough(
-                    mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                    mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
 
             // Diverge, so the recovery resets and replays instead of short-circuiting as converged.
             repo.commit(new Revision(5), 6000L, Author.SYSTEM, "diverged", "", Markup.PLAINTEXT,
@@ -327,7 +327,7 @@ class RecoverRepositoryTest {
         final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(repo); // head == r5
         final List<ReplayCommit> payload = withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
         repo.commit(new Revision(5), 6000L, Author.SYSTEM, "diverged", "", Markup.PLAINTEXT,
                     ImmutableList.of(Change.ofTextUpsert("/g.txt", "diverged")), false).join();
 
@@ -340,9 +340,9 @@ class RecoverRepositoryTest {
 
         // A failed attempt does not expose its partial head. A later administrator retry will wake the watch.
         final List<ReplayCommit> retryPayload = withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(10));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(10));
         final List<ReplayCommit> failingPayload = new ArrayList<>(withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(9)));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(9)));
         final ReplayCommit first = failingPayload.get(0);
         failingPayload.set(0, new ReplayCommit(
                 first.revision(), first.timestampMillis(), first.author(), first.summary(), first.detail(),
@@ -373,7 +373,7 @@ class RecoverRepositoryTest {
         final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(repo); // head == r5
         final List<ReplayCommit> payload = withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
 
         // A server-side listener has nobody to retry on its behalf, so a recovery must leave it watching.
         final BlockingQueue<Map<String, Entry<?>>> updates = new LinkedBlockingQueue<>();
@@ -399,7 +399,7 @@ class RecoverRepositoryTest {
         final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(repo);
         final List<ReplayCommit> payload = new ArrayList<>(withPaddingThrough(
-                mgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7)));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7)));
 
         // Diverge so recovery does not short-circuit as already-converged.
         repo.commit(new Revision(5), 6000L, Author.SYSTEM, "diverged", "", Markup.PLAINTEXT,
@@ -431,19 +431,19 @@ class RecoverRepositoryTest {
         final GitRepository repo = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(repo); // head == r5
 
-        assertThatThrownBy(() -> mgr.buildRecoveryPayload(REPO, new Revision(1), new Revision(5)))
+        assertThatThrownBy(() -> mgr.get(REPO).buildRecoveryPayload(new Revision(1), new Revision(5)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("[2, 5]");
-        assertThatThrownBy(() -> mgr.buildRecoveryPayload(REPO, new Revision(6), new Revision(6)))
+        assertThatThrownBy(() -> mgr.get(REPO).buildRecoveryPayload(new Revision(6), new Revision(6)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("[2, 5]");
-        assertThatThrownBy(() -> mgr.buildRecoveryPayload(REPO, new Revision(-1),
+        assertThatThrownBy(() -> mgr.get(REPO).buildRecoveryPayload(new Revision(-1),
                                                                         new Revision(5)))
                 .isInstanceOf(IllegalArgumentException.class);
 
         // A repository with only its creation commit has nothing to replay.
         mgr.create("empty_repo", Author.SYSTEM);
-        assertThatThrownBy(() -> mgr.buildRecoveryPayload("empty_repo", new Revision(2),
+        assertThatThrownBy(() -> mgr.get("empty_repo").buildRecoveryPayload(new Revision(2),
                                                                         new Revision(2)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("no replayable revision");
@@ -465,12 +465,12 @@ class RecoverRepositoryTest {
         final Revision head = repo.normalizeNow(Revision.HEAD); // r102 for a cap of 100
 
         // The whole range is one revision above the cap; the payload is refused rather than built.
-        assertThatThrownBy(() -> mgr.buildRecoveryPayload(REPO, new Revision(2), head))
+        assertThatThrownBy(() -> mgr.get(REPO).buildRecoveryPayload(new Revision(2), head))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("too many revisions");
 
         // Exactly at the cap is accepted.
-        assertThat(mgr.buildRecoveryPayload(REPO, new Revision(3), head)).hasSize(cap);
+        assertThat(mgr.get(REPO).buildRecoveryPayload(new Revision(3), head)).hasSize(cap);
     }
 
     @Test
@@ -479,7 +479,7 @@ class RecoverRepositoryTest {
         final GitRepository source = (GitRepository) mgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(source); // head == r5
         final List<ReplayCommit> payload =
-                mgr.buildRecoveryPayload(REPO, new Revision(5), new Revision(5));
+                mgr.get(REPO).buildRecoveryPayload(new Revision(5), new Revision(5));
 
         // A replica whose head is below the reset revision (r4) lacks the shared base history.
         final GitRepositoryManager lagging =
@@ -506,7 +506,7 @@ class RecoverRepositoryTest {
         source.commit(new Revision(2), 3000L, Author.SYSTEM, "a=2", "", Markup.PLAINTEXT,
                       ImmutableList.of(Change.ofJsonUpsert("/a.json", "{ \"a\": 2 }")), false).join();
         final List<ReplayCommit> payload = withPaddingThrough(
-                sourceMgr.buildRecoveryPayload(REPO, new Revision(2), new Revision(3)), new Revision(4));
+                sourceMgr.get(REPO).buildRecoveryPayload(new Revision(2), new Revision(3)), new Revision(4));
 
         // The replica holds the wrong content at r2 and the source's content at r3, so its head tree
         // matches the source's while its history does not.
@@ -536,7 +536,7 @@ class RecoverRepositoryTest {
         final GitRepository source = (GitRepository) sourceMgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(source); // head == r5
         final List<ReplayCommit> payload = withPaddingThrough(
-                sourceMgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                sourceMgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
 
         // The replica holds the shared base but stops at r3, so r4 and r5 are newer than anything it has.
         final GitRepositoryManager replicaMgr = newRepositoryManager(new File(tempDir.toFile(), "replica2"));
@@ -564,7 +564,7 @@ class RecoverRepositoryTest {
         final GitRepository source = (GitRepository) sourceMgr.create(REPO, Author.SYSTEM);
         pushMixedRevisions(source);
         final List<ReplayCommit> payload = withPaddingThrough(
-                sourceMgr.buildRecoveryPayload(REPO, new Revision(3), new Revision(5)), new Revision(7));
+                sourceMgr.get(REPO).buildRecoveryPayload(new Revision(3), new Revision(5)), new Revision(7));
 
         final ExecutorService repositoryWorker = Executors.newFixedThreadPool(1);
         final CountDownLatch workerStarted = new CountDownLatch(1);
@@ -614,7 +614,7 @@ class RecoverRepositoryTest {
                     new WrappedDekDetails(wdek, 1, encryptionStorageManager.kekId(), "test_project", REPO));
             mgr.create(REPO, 0, Author.SYSTEM, true);
 
-            assertThatThrownBy(() -> mgr.buildRecoveryPayload(REPO, new Revision(2), new Revision(2)))
+            assertThatThrownBy(() -> mgr.get(REPO).buildRecoveryPayload(new Revision(2), new Revision(2)))
                     .isInstanceOf(StorageException.class)
                     .hasMessageContaining("encrypted");
             final ReplayCommit commit =

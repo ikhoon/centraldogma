@@ -96,6 +96,7 @@ import com.linecorp.centraldogma.internal.jsonpatch.JsonPatch;
 import com.linecorp.centraldogma.internal.jsonpatch.ReplaceMode;
 import com.linecorp.centraldogma.server.command.CommitResult;
 import com.linecorp.centraldogma.server.command.ContentTransformer;
+import com.linecorp.centraldogma.server.command.ReplayCommit;
 import com.linecorp.centraldogma.server.internal.IsolatedSystemReader;
 import com.linecorp.centraldogma.server.internal.storage.repository.RepositoryCache;
 import com.linecorp.centraldogma.server.internal.storage.repository.git.Watch.WatchListener;
@@ -308,6 +309,11 @@ class GitRepository implements Repository {
         } finally {
             readUnlock();
         }
+    }
+
+    @Override
+    public List<ReplayCommit> buildRecoveryPayload(Revision fromRevision, Revision toRevision) {
+        return RepositoryRecovery.buildRecoveryPayload(this, fromRevision, toRevision);
     }
 
     @Override
@@ -1288,6 +1294,10 @@ class GitRepository implements Repository {
                     throw new Error();
             }
         }
+    }
+
+    void notifyAllWatchers(Revision revision) {
+        commitWatchers.notifyAll(revision);
     }
 
     Revision cachedHeadRevision() {

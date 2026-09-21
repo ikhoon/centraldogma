@@ -276,12 +276,6 @@ public final class GitRepositoryManager extends DirectoryBasedStorageManager<Rep
     }
 
     @Override
-    public List<ReplayCommit> buildRecoveryPayload(String repositoryName, Revision fromRevision,
-                                                   Revision toRevision) {
-        return new RepositoryRecovery(this).buildRecoveryPayload(repositoryName, fromRevision, toRevision);
-    }
-
-    @Override
     protected Repository openChild(File childDir) throws Exception {
         requireNonNull(childDir, "childDir");
         if (isEncryptedRepository(childDir)) {

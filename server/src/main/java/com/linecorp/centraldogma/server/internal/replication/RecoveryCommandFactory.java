@@ -31,6 +31,7 @@ import com.linecorp.centraldogma.server.command.Command;
 import com.linecorp.centraldogma.server.command.ReplayCommit;
 import com.linecorp.centraldogma.server.command.RequestRepositoryRecoveryCommand;
 import com.linecorp.centraldogma.server.storage.project.ProjectManager;
+import com.linecorp.centraldogma.server.storage.repository.Repository;
 import com.linecorp.centraldogma.server.storage.repository.RepositoryManager;
 
 /**
@@ -69,7 +70,8 @@ public final class RecoveryCommandFactory {
         checkArgument(maxRevision < Integer.MAX_VALUE,
                       "maxRevision: %s (expected: < %s)", maxRevision, Integer.MAX_VALUE);
         final RepositoryManager repositories = projectManager.get(projectName).repos();
-        final Revision sourceHead = repositories.get(repositoryName).head().revision();
+        final Repository repository = repositories.get(repositoryName);
+        final Revision sourceHead = repository.head().revision();
         if (sourceHead.compareTo(new Revision(maxRevision)) > 0) {
             throw new IllegalStateException(
                     "cannot recover " + projectName + '/' + repositoryName +
@@ -79,8 +81,7 @@ public final class RecoveryCommandFactory {
         checkArgument(recoveryCommitCount <= ApplyRepositoryRecoveryCommand.MAX_RECOVERY_COMMITS,
                       "recovery spans too many revisions: %s (maximum: %s)", recoveryCommitCount,
                       ApplyRepositoryRecoveryCommand.MAX_RECOVERY_COMMITS);
-        final List<ReplayCommit> sourceCommits =
-                repositories.buildRecoveryPayload(repositoryName, fromRevision, toRevision);
+        final List<ReplayCommit> sourceCommits = repository.buildRecoveryPayload(fromRevision, toRevision);
         final Revision recoveryRevision = new Revision(maxRevision + 1);
         final ImmutableList.Builder<ReplayCommit> commits =
                 ImmutableList.builderWithExpectedSize((int) recoveryCommitCount);

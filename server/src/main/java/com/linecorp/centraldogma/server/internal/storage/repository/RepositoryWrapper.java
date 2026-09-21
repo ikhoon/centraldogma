@@ -39,6 +39,7 @@ import com.linecorp.centraldogma.common.RevisionRange;
 import com.linecorp.centraldogma.internal.Util;
 import com.linecorp.centraldogma.server.command.CommitResult;
 import com.linecorp.centraldogma.server.command.ContentTransformer;
+import com.linecorp.centraldogma.server.command.ReplayCommit;
 import com.linecorp.centraldogma.server.storage.project.Project;
 import com.linecorp.centraldogma.server.storage.repository.CacheableCall;
 import com.linecorp.centraldogma.server.storage.repository.DiffResultType;
@@ -64,6 +65,11 @@ public class RepositoryWrapper implements Repository {
     @Override
     public RepositoryHead head() {
         return unwrap().head();
+    }
+
+    @Override
+    public List<ReplayCommit> buildRecoveryPayload(Revision fromRevision, Revision toRevision) {
+        return unwrap().buildRecoveryPayload(fromRevision, toRevision);
     }
 
     @Override

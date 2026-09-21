@@ -64,6 +64,7 @@ import com.linecorp.centraldogma.common.RevisionRange;
 import com.linecorp.centraldogma.internal.HistoryConstants;
 import com.linecorp.centraldogma.server.command.CommitResult;
 import com.linecorp.centraldogma.server.command.ContentTransformer;
+import com.linecorp.centraldogma.server.command.ReplayCommit;
 import com.linecorp.centraldogma.server.internal.replication.ReplicationLog;
 import com.linecorp.centraldogma.server.storage.StorageException;
 import com.linecorp.centraldogma.server.storage.project.Project;
@@ -89,6 +90,13 @@ public interface Repository {
      * recovery rewrites the repository, then returns the new head.
      */
     RepositoryHead head();
+
+    /**
+     * Builds the {@link ReplayCommit}s of {@code fromRevision..toRevision} to be carried by a repository
+     * recovery command. Invoked only on the source replica of a recovery. Both revisions must be absolute,
+     * {@code fromRevision} greater than 1 and {@code toRevision} between {@code fromRevision} and HEAD.
+     */
+    List<ReplayCommit> buildRecoveryPayload(Revision fromRevision, Revision toRevision);
 
     /**
      * Returns the generation of this repository's cached results. It changes whenever the history is

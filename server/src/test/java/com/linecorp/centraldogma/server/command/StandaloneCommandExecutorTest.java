@@ -173,9 +173,7 @@ class StandaloneCommandExecutorTest {
                     List.of(Change.ofTextUpsert("/a.txt", "v2")), true).join();
         repo.commit(new Revision(2), 2000L, Author.SYSTEM, "r3", "", Markup.PLAINTEXT,
                     List.of(Change.ofTextUpsert("/a.txt", "v3")), true).join();
-        final List<ReplayCommit> commits =
-                extension.projectManager().get(projectName).repos()
-                         .buildRecoveryPayload(repoName, new Revision(2), new Revision(2));
+        final List<ReplayCommit> commits = repo.buildRecoveryPayload(new Revision(2), new Revision(2));
         final String expectedTreeId = commits.get(0).expectedTreeId();
         final List<ReplayCommit> recoveryCommits = List.of(
                 commits.get(0),

@@ -48,8 +48,8 @@ class RecoveryCommandFactoryTest {
     @Test
     void createsPaddedCommandFromSourceRepository() {
         final ProjectManager projectManager = mock(ProjectManager.class, RETURNS_DEEP_STUBS);
-        when(projectManager.get(anyString()).repos()
-                           .buildRecoveryPayload(anyString(), any(Revision.class), any(Revision.class)))
+        when(projectManager.get(anyString()).repos().get(anyString())
+                           .buildRecoveryPayload(any(Revision.class), any(Revision.class)))
                 .thenReturn(ImmutableList.of(COMMIT));
         when(projectManager.get(anyString()).repos().get(anyString()).head())
                 .thenReturn(new RepositoryHead(new Revision(3), "commit", "tree"));
@@ -74,8 +74,8 @@ class RecoveryCommandFactoryTest {
     @Test
     void carriesTheRecoveryRevisionPastTheClusterMaximum() {
         final ProjectManager projectManager = mock(ProjectManager.class, RETURNS_DEEP_STUBS);
-        when(projectManager.get(anyString()).repos()
-                           .buildRecoveryPayload(anyString(), any(Revision.class), any(Revision.class)))
+        when(projectManager.get(anyString()).repos().get(anyString())
+                           .buildRecoveryPayload(any(Revision.class), any(Revision.class)))
                 .thenReturn(ImmutableList.of(COMMIT));
         when(projectManager.get(anyString()).repos().get(anyString()).head())
                 .thenReturn(new RepositoryHead(new Revision(3), "commit", "tree"));

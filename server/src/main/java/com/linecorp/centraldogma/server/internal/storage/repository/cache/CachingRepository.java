@@ -44,6 +44,7 @@ import com.linecorp.centraldogma.common.Revision;
 import com.linecorp.centraldogma.common.RevisionRange;
 import com.linecorp.centraldogma.server.command.CommitResult;
 import com.linecorp.centraldogma.server.command.ContentTransformer;
+import com.linecorp.centraldogma.server.command.ReplayCommit;
 import com.linecorp.centraldogma.server.internal.storage.repository.RepositoryCache;
 import com.linecorp.centraldogma.server.storage.project.Project;
 import com.linecorp.centraldogma.server.storage.repository.CacheableCall;
@@ -69,6 +70,11 @@ final class CachingRepository implements Repository {
     @Override
     public RepositoryHead head() {
         return repo.head();
+    }
+
+    @Override
+    public List<ReplayCommit> buildRecoveryPayload(Revision fromRevision, Revision toRevision) {
+        return repo.buildRecoveryPayload(fromRevision, toRevision);
     }
 
     @Override

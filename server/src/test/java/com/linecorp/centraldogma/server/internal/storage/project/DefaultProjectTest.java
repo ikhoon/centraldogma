@@ -57,9 +57,8 @@ class DefaultProjectTest {
     }
 
     /**
-     * A recovery rewrites {@code <project>/dogma} in place, so the metadata arrives again at a revision the
-     * project has already seen. Dropping it as stale would leave the project serving the roles and
-     * permissions from the diverged history for as long as the server runs.
+     * A recovery restores the metadata repository and publishes its final revision, so the project must
+     * refresh its metadata from the recovered content.
      */
     @Test
     void metadataFollowsARecoveredDogmaRepository() {
@@ -79,7 +78,7 @@ class DefaultProjectTest {
         final Revision recoveryRevision =
                 foo.repos().get(Project.REPO_DOGMA).normalizeNow(Revision.HEAD).forward(1);
         final List<ReplayCommit> payload = new ArrayList<>(
-                foo.repos().buildRecoveryPayload(Project.REPO_DOGMA, keptRevision, keptRevision));
+                foo.repos().get(Project.REPO_DOGMA).buildRecoveryPayload(keptRevision, keptRevision));
         final String expectedTreeId = payload.get(0).expectedTreeId();
         for (Revision revision = keptRevision.forward(1);; revision = revision.forward(1)) {
             payload.add(new ReplayCommit(revision, 0, Author.SYSTEM, "Recovery padding", "",

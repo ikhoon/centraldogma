@@ -135,7 +135,7 @@ final class RepositoryRecovery {
         } finally {
             repo.writeUnLock();
             if (recoverySucceeded) {
-                repo.commitWatchers.notifyAll(recoveryRevision);
+                repo.notifyAllWatchers(recoveryRevision);
             }
         }
 
@@ -276,13 +276,15 @@ final class RepositoryRecovery {
         repo.nextCacheGeneration();
     }
 
-    List<ReplayCommit> buildRecoveryPayload(String repositoryName, Revision fromRevision,
-                                             Revision toRevision) {
-        requireNonNull(repositoryName, "repositoryName");
+    static List<ReplayCommit> buildRecoveryPayload(GitRepository repo, Revision fromRevision,
+                                                    Revision toRevision) {
+        requireNonNull(repo, "repo");
         requireNonNull(fromRevision, "fromRevision");
         requireNonNull(toRevision, "toRevision");
-        final String repoPath = manager.projectRepositoryName(repositoryName);
-        final GitRepository repo = fileRepository(repositoryName);
+        final String repoPath = repo.parent().name() + '/' + repo.name();
+        if (repo.isEncrypted()) {
+            throw new StorageException("recovery is not supported for an encrypted repository: " + repoPath);
+        }
         // One snapshot: the history, every diff and every tree ID come from the same state, and a recovery
         // rewriting this repository waits rather than splicing two histories into one payload.
         return repo.withReadLock(() -> buildPayload(repo, repoPath, fromRevision, toRevision));

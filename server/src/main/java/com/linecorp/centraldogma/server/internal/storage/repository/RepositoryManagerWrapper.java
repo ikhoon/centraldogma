@@ -36,7 +36,6 @@ import org.jspecify.annotations.Nullable;
 import com.linecorp.centraldogma.common.Author;
 import com.linecorp.centraldogma.common.CentralDogmaException;
 import com.linecorp.centraldogma.common.RepositoryNotFoundException;
-import com.linecorp.centraldogma.common.Revision;
 import com.linecorp.centraldogma.internal.Util;
 import com.linecorp.centraldogma.server.command.ReplayCommit;
 import com.linecorp.centraldogma.server.storage.project.Project;
@@ -93,12 +92,6 @@ public class RepositoryManagerWrapper implements RepositoryManager {
     @Override
     public void recoverRepository(String repositoryName, List<ReplayCommit> commits) {
         delegate.recoverRepository(repositoryName, commits);
-    }
-
-    @Override
-    public List<ReplayCommit> buildRecoveryPayload(String repositoryName, Revision fromRevision,
-                                                   Revision toRevision) {
-        return delegate.buildRecoveryPayload(repositoryName, fromRevision, toRevision);
     }
 
     @Override
