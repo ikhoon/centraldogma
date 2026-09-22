@@ -23,6 +23,8 @@ import java.time.Instant;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,6 +33,7 @@ import com.google.common.base.MoreObjects;
 import com.linecorp.centraldogma.common.Author;
 import com.linecorp.centraldogma.common.Revision;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(Include.NON_EMPTY)
 public class CommitDto {
 
@@ -55,10 +58,21 @@ public class CommitDto {
 
     public CommitDto(Revision revision, Author author, CommitMessageDto commitMessage, long commitTimeMillis,
                      @Nullable String commitId, @Nullable String upstreamCommitId) {
+        this(revision, author, commitMessage, ISO_INSTANT.format(Instant.ofEpochMilli(commitTimeMillis)),
+             commitId, upstreamCommitId);
+    }
+
+    @JsonCreator
+    public CommitDto(@JsonProperty("revision") Revision revision,
+                     @JsonProperty("author") Author author,
+                     @JsonProperty("commitMessage") CommitMessageDto commitMessage,
+                     @JsonProperty("pushedAt") String pushedAt,
+                     @JsonProperty("commitId") @Nullable String commitId,
+                     @JsonProperty("upstreamCommitId") @Nullable String upstreamCommitId) {
         this.revision = requireNonNull(revision, "revision");
         this.author = requireNonNull(author, "author");
         this.commitMessage = requireNonNull(commitMessage, "commitMessage");
-        pushedAt = ISO_INSTANT.format(Instant.ofEpochMilli(commitTimeMillis));
+        this.pushedAt = ISO_INSTANT.format(Instant.parse(requireNonNull(pushedAt, "pushedAt")));
         this.commitId = commitId;
         this.upstreamCommitId = upstreamCommitId;
     }
