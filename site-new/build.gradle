@@ -27,6 +27,7 @@ tasks.clean.delete(project.file("${project.projectDir}/node_modules/.cache"))
 tasks.register('versionIndex', VersionIndexTask)
 tasks.register('apiIndex', ApiIndexTask) {
     dependsOn ':javadoc:javadoc'
+    mustRunAfter project(':site').tasks.matching { task -> task.name == 'sphinx' }
     javadocDir.set(project(':javadoc').tasks.named('javadoc', Javadoc).flatMap {
         it.destinationDirectory
     })
